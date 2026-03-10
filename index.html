@@ -1651,7 +1651,7 @@
                 <div class="container-box">
                     <div class="input-title">🔍 Inserir Notícia para Análise</div>
                     <div class="input-description">
-                        Cole aqui a notícia, manchete ou link que você deseja verificar. Você pode inserir um link completo ou apenas copiar e colar o texto da notícia.
+                        Cole aqui a notícia, manchete ou link que você deseja verificar. Você pode inserir um link completo, copiar e colar o texto da notícia, ou utilizar o leitor de QR Code.
                     </div>
 
                     <div class="tabs">
@@ -2428,24 +2428,37 @@
         // ========== NAVEGAÇÃO LIVRE ==========
         var navLivreAtiva = false;
 
+        function _esconderTodasTelas() {
+            var welcome = document.getElementById('welcomeScreen');
+            var input = document.getElementById('inputScreen');
+            var diag = document.getElementById('diagnosticScreen');
+            var result = document.getElementById('resultContainer');
+            if (welcome) welcome.classList.add('hidden');
+            if (input) input.classList.remove('active');
+            if (diag) diag.classList.remove('active');
+            if (result) result.classList.remove('active');
+            for (var i = 1; i <= 7; i++) {
+                var s = document.getElementById('step' + i);
+                if (s) s.classList.remove('active');
+            }
+        }
+
         function ativarNavLivre() {
             navLivreAtiva = true;
             document.getElementById('barraNavLivre').style.display = 'block';
             document.getElementById('btnNavLivre').style.background = '#c62828';
             document.getElementById('btnNavLivre').textContent = '🔒 Nav ON';
-            // Se não tiver notícia carregada, cria uma demo
             if (!currentNews.title) {
-                currentNews = { title: '[ Navegação Livre — Sem notícia ]', content: 'Modo de navegação administrativa ativa.', url: '' };
+                currentNews = { title: '[ Navegação Livre ]', content: 'Modo de navegação administrativa.', url: '' };
             }
-            // Vai para a tela de diagnóstico se não estiver lá
-            document.getElementById('inputScreen').classList.remove('active');
-            document.getElementById('diagnosticScreen').classList.add('active');
-            document.getElementById('resultScreen').classList.remove('active');
+            _esconderTodasTelas();
+            var diag = document.getElementById('diagnosticScreen');
+            if (diag) diag.classList.add('active');
+            var s1 = document.getElementById('step1');
+            if (s1) s1.classList.add('active');
             currentStep = 1;
-            document.querySelectorAll('.step').forEach(function(s){ s.classList.remove('active'); });
-            document.getElementById('step1').classList.add('active');
             var nd = document.getElementById('newsDisplay');
-            if (nd) nd.innerHTML = '<div style="padding:12px; background:#fff8e1; border-radius:8px; border-left:4px solid #f9a825; color:#555; font-size:0.9em;">🔓 <strong>Modo Navegação Livre</strong> — navegue entre as etapas livremente pela barra inferior.</div>';
+            if (nd) nd.innerHTML = '<div style="padding:12px; background:#fff8e1; border-radius:8px; border-left:4px solid #f9a825; color:#555; font-size:0.9em;">🔓 <strong>Modo Navegação Livre</strong> — use a barra inferior para navegar entre as etapas.</div>';
             scrollToTop();
         }
 
@@ -2454,35 +2467,52 @@
             document.getElementById('barraNavLivre').style.display = 'none';
             document.getElementById('btnNavLivre').style.background = '#37474f';
             document.getElementById('btnNavLivre').textContent = '🔓 Navegar';
-            document.getElementById('diagnosticScreen').classList.remove('active');
-            document.getElementById('inputScreen').classList.add('active');
+            _esconderTodasTelas();
+            var input = document.getElementById('inputScreen');
+            if (input) input.classList.add('active');
             currentNews = { title: '', content: '', url: '' };
             scrollToTop();
         }
 
         function irParaEtapa(n) {
             if (!navLivreAtiva) return;
+            _esconderTodasTelas();
             if (n === 0) {
-                document.getElementById('diagnosticScreen').classList.remove('active');
-                document.getElementById('resultScreen').classList.remove('active');
-                document.getElementById('inputScreen').classList.add('active');
-                scrollToTop();
-                return;
+                var input = document.getElementById('inputScreen');
+                if (input) input.classList.add('active');
+            } else {
+                var diag = document.getElementById('diagnosticScreen');
+                if (diag) diag.classList.add('active');
+                var stepEl = document.getElementById('step' + n);
+                if (stepEl) { stepEl.classList.add('active'); currentStep = n; }
+                var nd = document.getElementById('newsDisplay');
+                if (nd && !nd.innerHTML) nd.innerHTML = '<div style="padding:12px; background:#fff8e1; border-radius:8px; border-left:4px solid #f9a825; color:#555; font-size:0.9em;">🔓 Navegação Livre</div>';
             }
-            document.getElementById('inputScreen').classList.remove('active');
-            document.getElementById('resultScreen').classList.remove('active');
-            document.getElementById('diagnosticScreen').classList.add('active');
-            document.querySelectorAll('.step').forEach(function(s){ s.classList.remove('active'); });
-            var stepEl = document.getElementById('step' + n);
-            if (stepEl) { stepEl.classList.add('active'); currentStep = n; }
+            scrollToTop();
+        }
+
+        function irParaInicio() {
+            if (!navLivreAtiva) return;
+            _esconderTodasTelas();
+            var welcome = document.getElementById('welcomeScreen');
+            if (welcome) welcome.classList.remove('hidden');
             scrollToTop();
         }
 
         function irParaResultado() {
             if (!navLivreAtiva) return;
-            // Mostra resultado demo
-            document.getElementById('inputScreen').classList.remove('active');
-            document.getElementById('diagnosticScreen').classList.remove('active');
+            _esconderTodasTelas();
+            // resultContainer precisa estar dentro de diagnosticScreen ativo
+            var diag = document.getElementById('diagnosticScreen');
+            if (diag) diag.classList.add('active');
+            // Esconde todas as etapas
+            for (var i = 1; i <= 7; i++) {
+                var s = document.getElementById('step' + i);
+                if (s) s.classList.remove('active');
+            }
+            // Esconde navigation buttons se existir
+            var nav = document.getElementById('navigationButtons');
+            if (nav) nav.style.display = 'none';
             showResultDirect('warning', '[ Navegação Livre ]', 'Resultado de demonstração. Nenhuma análise foi registrada.', 5, '02', 'D-2', 'CID-D 02 — Informação parcialmente falsa', 'Suspeita de Desinformação');
         }
 
@@ -2511,21 +2541,76 @@
             demoStep = 1;
             resetAnswers();
 
-            document.getElementById('inputScreen').classList.remove('active');
-            document.getElementById('resultScreen').classList.remove('active');
-            document.getElementById('diagnosticScreen').classList.add('active');
-            document.querySelectorAll('.step').forEach(function(s){ s.classList.remove('active'); });
-            document.getElementById('step1').classList.add('active');
+            _esconderTodasTelas();
+            var diag = document.getElementById('diagnosticScreen');
+            if (diag) diag.classList.add('active');
+            var s1 = document.getElementById('step1');
+            if (s1) s1.classList.add('active');
             currentStep = 1;
 
             var nd = document.getElementById('newsDisplay');
-            if (nd) nd.innerHTML = '<div style="padding:12px; background:#e8f5e9; border-radius:8px; border-left:4px solid #2e7d32; color:#555; font-size:0.9em; margin-bottom:8px;">🎭 <strong>Modo Demonstração</strong> — o sistema responderá automaticamente.</div>'
+            if (nd) nd.innerHTML = '<div style="padding:12px; background:#e8f5e9; border-radius:8px; border-left:4px solid #2e7d32; color:#555; font-size:0.9em; margin-bottom:8px;">'
+                + '🎭 <strong>Modo Demonstração</strong> — '
+                + '<span id="demoModoTexto">avançando automaticamente</span>. '
+                + '<button onclick="toggleDemoManual()" id="btnDemoManual" style="padding:3px 10px; background:#1565c0; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; margin-left:6px;">⏸ Pausar</button>'
+                + '<button onclick="executarDemoStep()" id="btnDemoAvancar" style="display:none; padding:3px 10px; background:#2e7d32; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; margin-left:6px;">▶ Avançar</button>'
+                + '<span id="dicaTeclado" style="display:none; font-size:0.8em; color:#888; margin-left:8px;">← → para navegar</span>'
+                + '</div>'
                 + '<div class="news-title">📰 ' + demoNews.title + '</div>'
                 + '<div class="news-content"><p>' + demoNews.content + '</p></div>';
 
             scrollToTop();
-            // Auto-responder após 1.5s
-            setTimeout(executarDemoStep, 1500);
+            demoManual = false;
+            demoTimer = setTimeout(executarDemoStep, 2500);
+        }
+
+        var demoManual = false;
+        var demoTimer = null;
+
+        // Listener de teclado para o modo demo
+        document.addEventListener('keydown', function(e) {
+            if (!demoManual) return;
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                executarDemoStep();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                voltarDemoStep();
+            }
+        });
+
+        function voltarDemoStep() {
+            if (demoStep <= 2) return; // já está na etapa 1
+            demoStep -= 2; // -2 porque executarDemoStep já incrementa
+            // Resetar respostas e voltar à etapa anterior
+            var stepAnterior = demoStep;
+            resetAnswers();
+            // Reaplicar respostas até a etapa anterior
+            for (var i = 1; i < stepAnterior; i++) {
+                answers['step' + i] = demoAnswers[i] ? [2,1,2,1,1,1,2][i-1] : 0;
+            }
+            goToStep(stepAnterior);
+        }
+
+        function toggleDemoManual() {
+            demoManual = !demoManual;
+            var btnPausar = document.getElementById('btnDemoManual');
+            var btnAvancar = document.getElementById('btnDemoAvancar');
+            var texto = document.getElementById('demoModoTexto');
+            var dicaTeclado = document.getElementById('dicaTeclado');
+            if (demoManual) {
+                clearTimeout(demoTimer);
+                if (btnPausar) btnPausar.textContent = '▶ Auto';
+                if (btnAvancar) btnAvancar.style.display = 'inline-block';
+                if (texto) texto.textContent = 'modo manual';
+                if (dicaTeclado) dicaTeclado.style.display = 'inline';
+            } else {
+                if (btnPausar) btnPausar.textContent = '⏸ Pausar';
+                if (btnAvancar) btnAvancar.style.display = 'none';
+                if (texto) texto.textContent = 'avançando automaticamente';
+                if (dicaTeclado) dicaTeclado.style.display = 'none';
+                executarDemoStep();
+            }
         }
 
         function executarDemoStep() {
@@ -2535,7 +2620,9 @@
             if (stepFns[demoStep]) {
                 stepFns[demoStep](resposta);
                 demoStep++;
-                if (demoStep <= 7) setTimeout(executarDemoStep, 1200);
+                if (demoStep <= 7 && !demoManual) {
+                    demoTimer = setTimeout(executarDemoStep, 3000);
+                }
             }
         }
 
@@ -2544,7 +2631,7 @@
             nomeInst: 'Escola SESI Uberaba',
             emailContato: 'thales.garcia@fiemg.com.br',
             titulo: 'Protocolo Científico para Fake News',
-            descricao: 'Cole aqui a notícia, manchete ou link que você deseja verificar. Você pode inserir um link completo ou apenas copiar e colar o texto da notícia.',
+            descricao: 'Cole aqui a notícia, manchete ou link que você deseja verificar. Você pode inserir um link completo, copiar e colar o texto da notícia, ou utilizar o leitor de QR Code.',
             etapas: [
                 { pergunta: 'A informação possui FONTE IDENTIFICÁVEL?', descricao: 'Verifique se é possível identificar claramente quem publicou ou é responsável pela informação.' },
                 { pergunta: 'O AUTOR é rastreável e verificável?', descricao: 'Verifique se o autor possui histórico verificável e credibilidade na área.' },
@@ -4918,6 +5005,7 @@ showResultDirect(resultType, resultTitle, resultMessage, iciScore, cidNumber, ci
     <div id="barraNavLivre" style="display:none; position:fixed; bottom:0; left:0; right:0; background:linear-gradient(135deg,#37474f,#263238); padding:10px 20px; z-index:8888; box-shadow:0 -4px 12px rgba(0,0,0,0.3);">
         <div style="max-width:900px; margin:0 auto; display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center;">
             <span style="color:#90caf9; font-size:0.85em; font-weight:bold;">🔓 Navegação Livre:</span>
+            <button onclick="irParaInicio()" style="padding:6px 12px; background:#455a64; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">🏠 Início</button>
             <button onclick="irParaEtapa(0)" style="padding:6px 12px; background:#455a64; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">📝 Inserir</button>
             <button onclick="irParaEtapa(1)" style="padding:6px 12px; background:#455a64; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">E1</button>
             <button onclick="irParaEtapa(2)" style="padding:6px 12px; background:#455a64; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">E2</button>
