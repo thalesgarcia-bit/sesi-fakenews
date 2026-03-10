@@ -1435,6 +1435,11 @@
                     <label for="rememberMe" style="color:#555; font-size:0.9em; cursor:pointer;">Lembrar meu e-mail e senha</label>
                 </div>
                 <button id="btnEntrar" class="login-btn" onclick="fazerLogin()">ENTRAR</button>
+                <div id="dicaSpam" style="display:none; margin-top:12px; background:#fff8e1; border-left:4px solid #f9a825; border-radius:8px; padding:12px 15px; font-size:0.85em; color:#555; line-height:1.6;">
+                    <strong style="color:#f57c00;">📬 Não recebeu o e-mail?</strong><br>
+                    Verifique sua pasta de <strong>Spam</strong> ou <strong>Lixo Eletrônico</strong>.<br>
+                    Caso encontre lá, clique em <strong>"Não é spam"</strong> para que futuros e-mails cheguem na caixa principal.
+                </div>
                 <button id="btnReenviarVerificacao" onclick="reenviarVerificacao()" style="display:none; width:100%; margin-top:8px; padding:10px; background:#e65100; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.9em;">📧 Reenviar e-mail de verificação</button>
                 <div class="login-toggle">Não tem conta? <a id="linkRegistro" onclick="mostrarRegistro()">Registre-se aqui</a> &nbsp;|&nbsp; <a onclick="mostrarEsqueciSenha()" style="color:#003f87; cursor:pointer; text-decoration:underline;">Esqueci minha senha</a></div>
             </div>
@@ -2195,12 +2200,13 @@
                 // Firebase login
                 firebase.auth().signInWithEmailAndPassword(email, senha)
                     .then(function(cred) {
-                        if (!cred.user.emailVerified) {
+                        var emailsIsentos = ['admin@sesi.com.br', SUPER_ADMIN_EMAIL];
+                        if (!cred.user.emailVerified && emailsIsentos.indexOf(email) === -1) {
                             firebase.auth().signOut();
-                            mostrarMsgLogin('⚠️ E-mail não verificado. Verifique sua caixa de entrada e clique no link enviado.', 'error');
+                            mostrarMsgLogin('⚠️ E-mail não verificado. Verifique sua caixa de entrada (e a pasta Spam) e clique no link enviado.', 'error');
                             document.getElementById('btnReenviarVerificacao').style.display = 'block';
+                            document.getElementById('dicaSpam').style.display = 'block';
                             document.getElementById('btnReenviarVerificacao').setAttribute('data-user-uid', cred.user.uid);
-                            // Salva temporariamente para reenvio
                             window._pendingVerifEmail = email;
                             window._pendingVerifSenha = senha;
                             return null;
@@ -2331,7 +2337,8 @@
                     .then(function() {
                         firebase.auth().signOut();
                         mostrarMsgLogin('✅ Conta criada! Verifique seu e-mail e clique no link de confirmação antes de fazer login.', 'success');
-                        setTimeout(function() { limparRegistro(); mostrarLogin(); }, 4000);
+                        document.getElementById('dicaSpam').style.display = 'block';
+                        setTimeout(function() { limparRegistro(); mostrarLogin(); document.getElementById('dicaSpam').style.display = 'none'; }, 8000);
                     })
                     .catch(function(err) {
                         if (err.code === 'auth/email-already-in-use') mostrarMsgLogin('E-mail já registrado', 'error');
