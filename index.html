@@ -1403,6 +1403,7 @@
             }
         }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
     <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -1434,7 +1435,19 @@
                     <label for="rememberMe" style="color:#555; font-size:0.9em; cursor:pointer;">Lembrar meu e-mail e senha</label>
                 </div>
                 <button id="btnEntrar" class="login-btn" onclick="fazerLogin()">ENTRAR</button>
-                <div class="login-toggle">Não tem conta? <a id="linkRegistro" onclick="mostrarRegistro()">Registre-se aqui</a></div>
+                <button id="btnReenviarVerificacao" onclick="reenviarVerificacao()" style="display:none; width:100%; margin-top:8px; padding:10px; background:#e65100; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.9em;">📧 Reenviar e-mail de verificação</button>
+                <div class="login-toggle">Não tem conta? <a id="linkRegistro" onclick="mostrarRegistro()">Registre-se aqui</a> &nbsp;|&nbsp; <a onclick="mostrarEsqueciSenha()">Esqueci minha senha</a></div>
+
+            <!-- Painel Esqueci Senha -->
+            <div id="esqueciSenhaPanel" style="display:none; margin-top:10px;">
+                <div style="border-top:1px solid #ddd; padding-top:15px;">
+                    <p style="color:#555; font-size:0.9em; margin-bottom:10px;">Digite seu e-mail para receber o link de redefinição de senha:</p>
+                    <input type="email" id="esqueciEmail" placeholder="seu@email.com" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:0.9em; margin-bottom:10px; box-sizing:border-box;">
+                    <button onclick="enviarRedefinicaoSenha()" style="width:100%; padding:10px; background:#003f87; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.9em;">Enviar link de redefinição</button>
+                    <div id="msgEsqueci" style="margin-top:8px; font-size:0.85em; text-align:center;"></div>
+                    <div style="text-align:center; margin-top:10px;"><a onclick="ocultarEsqueciSenha()" style="color:#003f87; cursor:pointer; font-size:0.85em;">← Voltar ao login</a></div>
+                </div>
+            </div>
             </div>
 
             <div id="registerFormHeader" style="text-align:center; margin-bottom:20px; display:none;">
@@ -2055,9 +2068,9 @@
                 </div>
 
                 <div style="display:flex; gap:10px; margin-top:5px; flex-wrap:wrap;">
-                    <button onclick="exportarUsuariosCSV()" style="flex:1; min-width:180px; padding:11px 16px; background:#1565c0; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.9em;">👥 Exportar Usuários (CSV)</button>
-                    <button onclick="exportarAnalysesCSV()" style="flex:1; min-width:180px; padding:11px 16px; background:#1565c0; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.9em;">📊 Exportar Análises (CSV)</button>
-                    <button onclick="exportarAvaliacoesCSV()" style="flex:1; min-width:180px; padding:11px 16px; background:#1565c0; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.9em;">⭐ Exportar Avaliações (CSV)</button>
+                    <button onclick="exportarUsuariosXLSX()" style="flex:1; min-width:180px; padding:11px 16px; background:#1565c0; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.9em;">👥 Exportar Usuários (Excel)</button>
+                    <button onclick="exportarAnalysesXLSX()" style="flex:1; min-width:180px; padding:11px 16px; background:#1565c0; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.9em;">📊 Exportar Análises (Excel)</button>
+                    <button onclick="exportarAvaliacoesCSV()" style="flex:1; min-width:180px; padding:11px 16px; background:#1565c0; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.9em;">⭐ Exportar Avaliações (Excel)</button>
                 </div>
 
                 <h3 style="color: #003f87; margin: 30px 0 15px;">👥 Usuários Cadastrados</h3>
@@ -2139,6 +2152,14 @@
         };
 
         var firebaseReady = false;
+        var SUPER_ADMIN_EMAIL = 'thalesgarciacunha@gmail.com';
+
+        function isSuperAdmin() {
+            return currentUser && currentUser.email === SUPER_ADMIN_EMAIL;
+        }
+        function isAdmin() {
+            return currentUser && (currentUser.type === 'admin' || isSuperAdmin());
+        }
         var db = null;
 
         try {
@@ -2172,12 +2193,28 @@
                 // Firebase login
                 firebase.auth().signInWithEmailAndPassword(email, senha)
                     .then(function(cred) {
+                        if (!cred.user.emailVerified) {
+                            firebase.auth().signOut();
+                            mostrarMsgLogin('⚠️ E-mail não verificado. Verifique sua caixa de entrada e clique no link enviado.', 'error');
+                            document.getElementById('btnReenviarVerificacao').style.display = 'block';
+                            document.getElementById('btnReenviarVerificacao').setAttribute('data-user-uid', cred.user.uid);
+                            // Salva temporariamente para reenvio
+                            window._pendingVerifEmail = email;
+                            window._pendingVerifSenha = senha;
+                            return null;
+                        }
                         return db.collection('users').doc(cred.user.uid).get();
                     })
                     .then(function(doc) {
+                        if (!doc) return;
                         console.log('Firestore doc.exists:', doc.exists, '| doc.id:', doc.id, '| data:', JSON.stringify(doc.data()));
                         if (doc.exists) {
                             currentUser = Object.assign({ id: doc.id }, doc.data());
+                            // Garante que o Super Admin sempre tenha type admin
+                            if (currentUser.email === SUPER_ADMIN_EMAIL && currentUser.type !== 'admin') {
+                                db.collection('users').doc(doc.id).update({ type: 'admin' });
+                                currentUser.type = 'admin';
+                            }
                             if (lembrar) {
                                 try { localStorage.setItem('sesi_remember_email', email); localStorage.setItem('sesi_remember_senha', senha); } catch(e) {}
                             } else {
@@ -2286,11 +2323,13 @@
             if (firebaseReady) {
                 firebase.auth().createUserWithEmailAndPassword(email, senha)
                     .then(function(cred) {
+                        cred.user.sendEmailVerification();
                         return db.collection('users').doc(cred.user.uid).set(userData);
                     })
                     .then(function() {
-                        mostrarMsgLogin('Conta criada! Faça login agora', 'success');
-                        setTimeout(function() { limparRegistro(); mostrarLogin(); }, 1500);
+                        firebase.auth().signOut();
+                        mostrarMsgLogin('✅ Conta criada! Verifique seu e-mail e clique no link de confirmação antes de fazer login.', 'success');
+                        setTimeout(function() { limparRegistro(); mostrarLogin(); }, 4000);
                     })
                     .catch(function(err) {
                         if (err.code === 'auth/email-already-in-use') mostrarMsgLogin('E-mail já registrado', 'error');
@@ -2341,9 +2380,15 @@
             var userPanel = document.getElementById('userPanel');
             userPanel.style.display = 'flex';
             document.getElementById('headerUserName').textContent = currentUser.name;
-            document.getElementById('headerUserType').textContent = currentUser.type === 'admin' ? 'Administrador' : 'Usuario';
-            if (currentUser.type === 'admin') {
+            if (isSuperAdmin()) {
+                document.getElementById('headerUserType').textContent = '👑 Super Admin';
                 document.getElementById('btnAdminPanel').style.display = 'block';
+                document.getElementById('btnAdminPanel').style.background = '#f57c00';
+            } else if (currentUser.type === 'admin') {
+                document.getElementById('headerUserType').textContent = '🔧 Administrador';
+                document.getElementById('btnAdminPanel').style.display = 'block';
+            } else {
+                document.getElementById('headerUserType').textContent = 'Usuário';
             }
         }
 
@@ -2360,6 +2405,57 @@
             if (btnAdmin) btnAdmin.style.display = 'none';
             document.getElementById('loginEmail').value = '';
             document.getElementById('loginPassword').value = '';
+        }
+
+        // ========== VERIFICAÇÃO DE E-MAIL ==========
+        function mostrarEsqueciSenha() {
+            document.getElementById('esqueciSenhaPanel').style.display = 'block';
+            document.getElementById('loginForm').style.display = 'none';
+            document.querySelector('.login-toggle').style.display = 'none';
+            document.getElementById('btnReenviarVerificacao').style.display = 'none';
+        }
+
+        function ocultarEsqueciSenha() {
+            document.getElementById('esqueciSenhaPanel').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+            document.querySelector('.login-toggle').style.display = 'block';
+            document.getElementById('msgEsqueci').textContent = '';
+            document.getElementById('esqueciEmail').value = '';
+        }
+
+        function enviarRedefinicaoSenha() {
+            var email = document.getElementById('esqueciEmail').value.trim();
+            var msgEl = document.getElementById('msgEsqueci');
+            if (!email) { msgEl.style.color = '#c62828'; msgEl.textContent = 'Informe seu e-mail.'; return; }
+            if (!firebaseReady) { msgEl.style.color = '#c62828'; msgEl.textContent = 'Firebase não disponível.'; return; }
+            firebase.auth().sendPasswordResetEmail(email)
+                .then(function() {
+                    msgEl.style.color = '#2e7d32';
+                    msgEl.textContent = '✅ Link enviado! Verifique seu e-mail.';
+                    setTimeout(function() { ocultarEsqueciSenha(); }, 3000);
+                })
+                .catch(function(err) {
+                    msgEl.style.color = '#c62828';
+                    if (err.code === 'auth/user-not-found') msgEl.textContent = 'E-mail não encontrado.';
+                    else msgEl.textContent = 'Erro ao enviar. Tente novamente.';
+                });
+        }
+
+        function reenviarVerificacao() {
+            var email = window._pendingVerifEmail;
+            var senha = window._pendingVerifSenha;
+            if (!email || !senha) { mostrarMsgLogin('Faça login novamente para reenviar.', 'error'); return; }
+            firebase.auth().signInWithEmailAndPassword(email, senha)
+                .then(function(cred) {
+                    return cred.user.sendEmailVerification().then(function() {
+                        firebase.auth().signOut();
+                        mostrarMsgLogin('✅ E-mail de verificação reenviado!', 'success');
+                        document.getElementById('btnReenviarVerificacao').style.display = 'none';
+                    });
+                })
+                .catch(function() {
+                    mostrarMsgLogin('Erro ao reenviar. Tente fazer login novamente.', 'error');
+                });
         }
 
         function mostrarPainelAdmin() {
@@ -2403,16 +2499,34 @@
             var usersHtml = '';
             users.forEach(function(u) {
                 var sexLabel = u.sex === 'M' ? 'Masculino' : u.sex === 'F' ? 'Feminino' : '-';
-                var promBtn = u.type !== 'admin'
-                    ? '<button onclick="promoverAdmin(\'' + u.id + '\')" style="padding:4px 10px;background:#ff9800;color:white;border:none;border-radius:4px;cursor:pointer;font-size:0.8em;">👑 Tornar Admin</button>'
-                    : '<span style="color:#2e7d32;font-weight:bold;">👑 Admin</span>';
-                usersHtml += '<div style="padding:10px 15px;display:grid;grid-template-columns:1.5fr 1.5fr 1fr 1fr 1fr 1.2fr;gap:10px;border-bottom:1px solid #ddd;font-size:0.85em;align-items:center;">'
+                var isSuperAdminUser = u.email === SUPER_ADMIN_EMAIL;
+                var tipoLabel = isSuperAdminUser
+                    ? '<span style="color:#f57c00;font-weight:bold;">👑 Super Admin</span>'
+                    : (u.type === 'admin' ? '<span style="color:#2e7d32;font-weight:bold;">🔧 Admin</span>' : '👤 Usuário');
+
+                var acoes = '';
+                if (isSuperAdmin()) {
+                    if (!isSuperAdminUser) {
+                        if (u.type !== 'admin') {
+                            acoes += '<button onclick="promoverAdmin(\'' + u.id + '\')" style="padding:4px 8px;background:#ff9800;color:white;border:none;border-radius:4px;cursor:pointer;font-size:0.78em;margin-right:4px;">👑 Tornar Admin</button>';
+                        } else {
+                            acoes += '<button onclick="rebaixarAdmin(\'' + u.id + '\')" style="padding:4px 8px;background:#1565c0;color:white;border:none;border-radius:4px;cursor:pointer;font-size:0.78em;margin-right:4px;">👤 Remover Admin</button>';
+                        }
+                        acoes += '<button onclick="excluirUsuario(\'' + u.id + '\',\'' + u.email + '\')" style="padding:4px 8px;background:#c62828;color:white;border:none;border-radius:4px;cursor:pointer;font-size:0.78em;">🗑️ Excluir</button>';
+                    } else {
+                        acoes = '<span style="color:#999;font-size:0.8em;">— Super Admin —</span>';
+                    }
+                } else {
+                    acoes = '<span style="color:#999;font-size:0.8em;">Sem permissão</span>';
+                }
+
+                usersHtml += '<div style="padding:10px 15px;display:grid;grid-template-columns:1.5fr 1.5fr 1fr 1fr 1fr 1.5fr;gap:10px;border-bottom:1px solid #ddd;font-size:0.85em;align-items:center;">'
                     + '<div>' + u.name + '</div>'
                     + '<div>' + u.email + '</div>'
                     + '<div>' + (u.birthDate || '-') + '</div>'
                     + '<div>' + sexLabel + '</div>'
-                    + '<div>' + (u.type === 'admin' ? '👑 Admin' : '👤 Usuário') + '</div>'
-                    + '<div>' + promBtn + '</div>'
+                    + '<div>' + tipoLabel + '</div>'
+                    + '<div>' + acoes + '</div>'
                     + '</div>';
             });
             document.getElementById('usersAdminTable').innerHTML = usersHtml;
@@ -2478,68 +2592,426 @@
             document.getElementById('evaluationsAdminTable').innerHTML = evalsHtml;
         }
 
-        function csvDownload(csv, filename) {
-            // Encode UTF-8 to base64 safely (handles accents/special chars)
-            var encoded = unescape(encodeURIComponent(csv));
-            var b64 = btoa(encoded);
-            var link = document.createElement('a');
-            link.href = 'data:text/csv;base64,' + b64;
-            link.download = filename;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+        // ========== EXPORTAÇÃO EXCEL ==========
+
+        function xlsxDownload(wb, filename) {
+            XLSX.writeFile(wb, filename);
         }
 
-        function exportarUsuariosCSV() {
-            var csv = 'Nome,E-mail,Nasc.,Sexo,Tipo\n';
-            users.forEach(function(u) {
-                var sexLabel = u.sex === 'M' ? 'Masculino' : u.sex === 'F' ? 'Feminino' : '-';
-                csv += '"' + u.name + '","' + u.email + '","'
-                     + (u.birthDate || '-') + '","'
-                     + sexLabel + '","'
-                     + (u.type === 'admin' ? 'Administrador' : 'Usuario') + '"\n';
+        function getHeaderStyle() {
+            return {
+                font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
+                fill: { fgColor: { rgb: '003F87' } },
+                alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+                border: {
+                    top: { style: 'thin', color: { rgb: 'CCCCCC' } },
+                    bottom: { style: 'thin', color: { rgb: 'CCCCCC' } },
+                    left: { style: 'thin', color: { rgb: 'CCCCCC' } },
+                    right: { style: 'thin', color: { rgb: 'CCCCCC' } }
+                }
+            };
+        }
+
+        function getDataStyle(isAlt) {
+            return {
+                fill: { fgColor: { rgb: isAlt ? 'EBF2FF' : 'FFFFFF' } },
+                alignment: { vertical: 'center', wrapText: true },
+                border: {
+                    top: { style: 'thin', color: { rgb: 'DDDDDD' } },
+                    bottom: { style: 'thin', color: { rgb: 'DDDDDD' } },
+                    left: { style: 'thin', color: { rgb: 'DDDDDD' } },
+                    right: { style: 'thin', color: { rgb: 'DDDDDD' } }
+                }
+            };
+        }
+
+        function addSheetTitle(ws, title, subtitle, ncols) {
+            // Row 0: title
+            ws['A1'] = { v: title, t: 's', s: { font: { bold: true, sz: 14, color: { rgb: '003F87' } }, alignment: { horizontal: 'center' } } };
+            var mergeTitle = { s: { r: 0, c: 0 }, e: { r: 0, c: ncols - 1 } };
+            // Row 1: subtitle
+            ws['A2'] = { v: subtitle, t: 's', s: { font: { italic: true, sz: 10, color: { rgb: '666666' } }, alignment: { horizontal: 'center' } } };
+            var mergeSub = { s: { r: 1, c: 0 }, e: { r: 1, c: ncols - 1 } };
+            // Row 2: empty spacer
+            ws['A3'] = { v: '', t: 's' };
+            if (!ws['!merges']) ws['!merges'] = [];
+            ws['!merges'].push(mergeTitle, mergeSub);
+        }
+
+        function encodeCell(r, c) {
+            return XLSX.utils.encode_cell({ r: r, c: c });
+        }
+
+        function buildAnalysesSheet(data, sheetTitle) {
+            var ws = {};
+            var now = new Date().toLocaleDateString('pt-BR');
+            addSheetTitle(ws, 'Protocolo Científico para Fake News — SESI', sheetTitle + ' | Gerado em: ' + now, 10);
+
+            var headers = ['Nome', 'E-mail', 'Nasc.', 'Sexo', 'Data', 'ICI', 'Gravidade', 'CID-D', 'Tema', 'Manchete/Link'];
+            var headerStyle = getHeaderStyle();
+            headers.forEach(function(h, c) {
+                var cell = encodeCell(3, c);
+                ws[cell] = { v: h, t: 's', s: headerStyle };
             });
-            csvDownload(csv, 'SESI_Usuarios.csv');
+
+            data.forEach(function(a, i) {
+                var u = null;
+                for (var j = 0; j < users.length; j++) { if (users[j].id === a.userId) { u = users[j]; break; } }
+                var sexLabel = u && u.sex === 'M' ? 'Masculino' : u && u.sex === 'F' ? 'Feminino' : (u && u.sex ? u.sex : '-');
+                var style = getDataStyle(i % 2 === 1);
+                var row = [
+                    u ? u.name : '?',
+                    u ? u.email : '?',
+                    u && u.birthDate ? u.birthDate : '-',
+                    sexLabel,
+                    new Date(a.createdAt).toLocaleDateString('pt-BR'),
+                    a.ici !== undefined ? a.ici + '/10' : '-',
+                    a.cidSeverity || '-',
+                    a.cid || '-',
+                    a.theme || 'Geral',
+                    (a.title || a.url || a.content || '').substring(0, 120)
+                ];
+                row.forEach(function(val, c) {
+                    var cell = encodeCell(4 + i, c);
+                    ws[cell] = { v: val, t: 's', s: style };
+                });
+            });
+
+            var range = { s: { r: 0, c: 0 }, e: { r: 4 + data.length, c: 9 } };
+            ws['!ref'] = XLSX.utils.encode_range(range);
+            ws['!cols'] = [
+                { wch: 22 }, { wch: 26 }, { wch: 12 }, { wch: 10 },
+                { wch: 12 }, { wch: 8 }, { wch: 10 }, { wch: 12 },
+                { wch: 14 }, { wch: 40 }
+            ];
+            return ws;
+        }
+
+        function buildThemeSheet(data) {
+            var ws = {};
+            var now = new Date().toLocaleDateString('pt-BR');
+            addSheetTitle(ws, 'Protocolo Científico para Fake News — SESI', 'Análises por Tema | Gerado em: ' + now, 10);
+
+            // Group by theme
+            var themes = {};
+            data.forEach(function(a) {
+                var t = a.theme || 'Geral';
+                if (!themes[t]) themes[t] = [];
+                themes[t].push(a);
+            });
+
+            var headers = ['Nome', 'E-mail', 'Nasc.', 'Sexo', 'Data', 'ICI', 'Gravidade', 'CID-D', 'Tema', 'Manchete/Link'];
+            var headerStyle = getHeaderStyle();
+            var rowIdx = 3;
+            var alt = 0;
+
+            Object.keys(themes).sort().forEach(function(theme) {
+                // Theme group header
+                var themeStyle = {
+                    font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 },
+                    fill: { fgColor: { rgb: '1565C0' } },
+                    alignment: { horizontal: 'left', vertical: 'center' }
+                };
+                ws[encodeCell(rowIdx, 0)] = { v: '📂 ' + theme + ' (' + themes[theme].length + ' análise(s))', t: 's', s: themeStyle };
+                for (var cc = 1; cc < 10; cc++) {
+                    ws[encodeCell(rowIdx, cc)] = { v: '', t: 's', s: themeStyle };
+                }
+                if (!ws['!merges']) ws['!merges'] = [];
+                ws['!merges'].push({ s: { r: rowIdx, c: 0 }, e: { r: rowIdx, c: 9 } });
+                rowIdx++;
+
+                // Column headers
+                headers.forEach(function(h, c) {
+                    ws[encodeCell(rowIdx, c)] = { v: h, t: 's', s: headerStyle };
+                });
+                rowIdx++;
+
+                // Data rows
+                themes[theme].forEach(function(a) {
+                    var u = null;
+                    for (var j = 0; j < users.length; j++) { if (users[j].id === a.userId) { u = users[j]; break; } }
+                    var sexLabel = u && u.sex === 'M' ? 'Masculino' : u && u.sex === 'F' ? 'Feminino' : (u && u.sex ? u.sex : '-');
+                    var style = getDataStyle(alt % 2 === 1);
+                    alt++;
+                    var row = [
+                        u ? u.name : '?', u ? u.email : '?',
+                        u && u.birthDate ? u.birthDate : '-', sexLabel,
+                        new Date(a.createdAt).toLocaleDateString('pt-BR'),
+                        a.ici !== undefined ? a.ici + '/10' : '-',
+                        a.cidSeverity || '-', a.cid || '-', a.theme || 'Geral',
+                        (a.title || a.url || a.content || '').substring(0, 120)
+                    ];
+                    row.forEach(function(val, c) {
+                        ws[encodeCell(rowIdx, c)] = { v: val, t: 's', s: style };
+                    });
+                    rowIdx++;
+                });
+                rowIdx++; // spacer
+            });
+
+            var range = { s: { r: 0, c: 0 }, e: { r: rowIdx, c: 9 } };
+            ws['!ref'] = XLSX.utils.encode_range(range);
+            ws['!cols'] = [
+                { wch: 22 }, { wch: 26 }, { wch: 12 }, { wch: 10 },
+                { wch: 12 }, { wch: 8 }, { wch: 10 }, { wch: 12 },
+                { wch: 14 }, { wch: 40 }
+            ];
+            return ws;
+        }
+
+        function buildStatsSheet(data) {
+            var ws = {};
+            var now = new Date().toLocaleDateString('pt-BR');
+            addSheetTitle(ws, 'Protocolo Científico para Fake News — SESI', 'Estatísticas e Gráficos | Gerado em: ' + now, 6);
+
+            var rowIdx = 3;
+            var headerStyle = getHeaderStyle();
+            var titleStyle = { font: { bold: true, sz: 12, color: { rgb: '003F87' } }, fill: { fgColor: { rgb: 'D6E4FF' } }, alignment: { horizontal: 'left' } };
+
+            // --- Summary cards ---
+            ws[encodeCell(rowIdx, 0)] = { v: '📊 RESUMO GERAL', t: 's', s: titleStyle };
+            for (var cc = 1; cc < 6; cc++) ws[encodeCell(rowIdx, cc)] = { v: '', t: 's', s: titleStyle };
+            if (!ws['!merges']) ws['!merges'] = [];
+            ws['!merges'].push({ s: { r: rowIdx, c: 0 }, e: { r: rowIdx, c: 5 } });
+            rowIdx++;
+
+            var totalAnalyses = data.length;
+            var avgICI = data.length > 0 ? (data.reduce(function(s,a){ return s + (a.ici||0); }, 0) / data.length).toFixed(1) : 0;
+            var uniqueUsers = {};
+            data.forEach(function(a){ uniqueUsers[a.userId] = 1; });
+            var totalUsers = Object.keys(uniqueUsers).length;
+
+            var summaryData = [
+                ['Total de Análises', totalAnalyses],
+                ['Média ICI', avgICI + '/10'],
+                ['Usuários Ativos', totalUsers],
+                ['Total de Usuários', users.length]
+            ];
+            summaryData.forEach(function(row) {
+                ws[encodeCell(rowIdx, 0)] = { v: row[0], t: 's', s: { font: { bold: true }, fill: { fgColor: { rgb: 'F5F5F5' } } } };
+                ws[encodeCell(rowIdx, 1)] = { v: row[1], t: typeof row[1] === 'number' ? 'n' : 's', s: { fill: { fgColor: { rgb: 'F5F5F5' } } } };
+                rowIdx++;
+            });
+            rowIdx++;
+
+            // --- ICI Distribution ---
+            ws[encodeCell(rowIdx, 0)] = { v: '📈 DISTRIBUIÇÃO ICI', t: 's', s: titleStyle };
+            for (var cc2 = 1; cc2 < 6; cc2++) ws[encodeCell(rowIdx, cc2)] = { v: '', t: 's', s: titleStyle };
+            ws['!merges'].push({ s: { r: rowIdx, c: 0 }, e: { r: rowIdx, c: 5 } });
+            rowIdx++;
+
+            ws[encodeCell(rowIdx, 0)] = { v: 'Pontuação ICI', t: 's', s: headerStyle };
+            ws[encodeCell(rowIdx, 1)] = { v: 'Qtd. Análises', t: 's', s: headerStyle };
+            ws[encodeCell(rowIdx, 2)] = { v: 'Percentual', t: 's', s: headerStyle };
+            rowIdx++;
+
+            var iciCounts = {};
+            for (var i = 0; i <= 10; i++) iciCounts[i] = 0;
+            data.forEach(function(a){ if (a.ici !== undefined) iciCounts[a.ici] = (iciCounts[a.ici] || 0) + 1; });
+            for (var score = 10; score >= 0; score--) {
+                var cnt = iciCounts[score] || 0;
+                var pct = data.length > 0 ? ((cnt / data.length) * 100).toFixed(1) + '%' : '0%';
+                var st = getDataStyle(score % 2 === 0);
+                ws[encodeCell(rowIdx, 0)] = { v: score + '/10', t: 's', s: st };
+                ws[encodeCell(rowIdx, 1)] = { v: cnt, t: 'n', s: st };
+                ws[encodeCell(rowIdx, 2)] = { v: pct, t: 's', s: st };
+                rowIdx++;
+            }
+            rowIdx++;
+
+            // --- Severity Distribution ---
+            ws[encodeCell(rowIdx, 0)] = { v: '🎯 DISTRIBUIÇÃO DE GRAVIDADE (CID-D)', t: 's', s: titleStyle };
+            for (var cc3 = 1; cc3 < 6; cc3++) ws[encodeCell(rowIdx, cc3)] = { v: '', t: 's', s: titleStyle };
+            ws['!merges'].push({ s: { r: rowIdx, c: 0 }, e: { r: rowIdx, c: 5 } });
+            rowIdx++;
+
+            ws[encodeCell(rowIdx, 0)] = { v: 'Gravidade', t: 's', s: headerStyle };
+            ws[encodeCell(rowIdx, 1)] = { v: 'Descrição', t: 's', s: headerStyle };
+            ws[encodeCell(rowIdx, 2)] = { v: 'Qtd.', t: 's', s: headerStyle };
+            ws[encodeCell(rowIdx, 3)] = { v: 'Percentual', t: 's', s: headerStyle };
+            rowIdx++;
+
+            var sevDesc = { 'D-0':'Informação Verificada','D-1':'Baixo Risco','D-2':'Suspeita de Desinformação','D-3':'Alta Probabilidade','D-4':'Desinformação Confirmada' };
+            var sevCounts = {};
+            data.forEach(function(a){ var s = a.cidSeverity || 'S/D'; sevCounts[s] = (sevCounts[s]||0)+1; });
+            ['D-0','D-1','D-2','D-3','D-4','S/D'].forEach(function(sev, i) {
+                var cnt2 = sevCounts[sev] || 0;
+                var pct2 = data.length > 0 ? ((cnt2 / data.length) * 100).toFixed(1) + '%' : '0%';
+                var st2 = getDataStyle(i % 2 === 0);
+                ws[encodeCell(rowIdx, 0)] = { v: sev, t: 's', s: st2 };
+                ws[encodeCell(rowIdx, 1)] = { v: sevDesc[sev] || '-', t: 's', s: st2 };
+                ws[encodeCell(rowIdx, 2)] = { v: cnt2, t: 'n', s: st2 };
+                ws[encodeCell(rowIdx, 3)] = { v: pct2, t: 's', s: st2 };
+                rowIdx++;
+            });
+            rowIdx++;
+
+            // --- By Theme ---
+            ws[encodeCell(rowIdx, 0)] = { v: '🏷️ ANÁLISES POR TEMA', t: 's', s: titleStyle };
+            for (var cc4 = 1; cc4 < 6; cc4++) ws[encodeCell(rowIdx, cc4)] = { v: '', t: 's', s: titleStyle };
+            ws['!merges'].push({ s: { r: rowIdx, c: 0 }, e: { r: rowIdx, c: 5 } });
+            rowIdx++;
+
+            ws[encodeCell(rowIdx, 0)] = { v: 'Tema', t: 's', s: headerStyle };
+            ws[encodeCell(rowIdx, 1)] = { v: 'Qtd. Análises', t: 's', s: headerStyle };
+            ws[encodeCell(rowIdx, 2)] = { v: 'Percentual', t: 's', s: headerStyle };
+            ws[encodeCell(rowIdx, 3)] = { v: 'Média ICI', t: 's', s: headerStyle };
+            rowIdx++;
+
+            var themeCounts = {};
+            var themeICI = {};
+            data.forEach(function(a){
+                var t2 = a.theme || 'Geral';
+                themeCounts[t2] = (themeCounts[t2]||0)+1;
+                if (!themeICI[t2]) themeICI[t2] = [];
+                if (a.ici !== undefined) themeICI[t2].push(a.ici);
+            });
+            var themesSorted = Object.keys(themeCounts).sort(function(a,b){ return themeCounts[b]-themeCounts[a]; });
+            themesSorted.forEach(function(t3, i) {
+                var cnt3 = themeCounts[t3];
+                var pct3 = ((cnt3 / data.length) * 100).toFixed(1) + '%';
+                var avgT = themeICI[t3].length > 0 ? (themeICI[t3].reduce(function(s,v){return s+v;},0)/themeICI[t3].length).toFixed(1)+'/10' : '-';
+                var st3 = getDataStyle(i % 2 === 1);
+                ws[encodeCell(rowIdx, 0)] = { v: t3, t: 's', s: st3 };
+                ws[encodeCell(rowIdx, 1)] = { v: cnt3, t: 'n', s: st3 };
+                ws[encodeCell(rowIdx, 2)] = { v: pct3, t: 's', s: st3 };
+                ws[encodeCell(rowIdx, 3)] = { v: avgT, t: 's', s: st3 };
+                rowIdx++;
+            });
+            rowIdx++;
+
+            // --- By Month ---
+            ws[encodeCell(rowIdx, 0)] = { v: '📅 ANÁLISES POR MÊS', t: 's', s: titleStyle };
+            for (var cc5 = 1; cc5 < 6; cc5++) ws[encodeCell(rowIdx, cc5)] = { v: '', t: 's', s: titleStyle };
+            ws['!merges'].push({ s: { r: rowIdx, c: 0 }, e: { r: rowIdx, c: 5 } });
+            rowIdx++;
+
+            ws[encodeCell(rowIdx, 0)] = { v: 'Mês/Ano', t: 's', s: headerStyle };
+            ws[encodeCell(rowIdx, 1)] = { v: 'Qtd. Análises', t: 's', s: headerStyle };
+            rowIdx++;
+
+            var monthCounts = {};
+            data.forEach(function(a){
+                var d = new Date(a.createdAt);
+                var key = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                monthCounts[key] = (monthCounts[key]||0)+1;
+            });
+            var monthsSorted = Object.keys(monthCounts).sort();
+            monthsSorted.forEach(function(m, i) {
+                var st4 = getDataStyle(i % 2 === 1);
+                ws[encodeCell(rowIdx, 0)] = { v: m, t: 's', s: st4 };
+                ws[encodeCell(rowIdx, 1)] = { v: monthCounts[m], t: 'n', s: st4 };
+                rowIdx++;
+            });
+
+            var range = { s: { r: 0, c: 0 }, e: { r: rowIdx + 1, c: 5 } };
+            ws['!ref'] = XLSX.utils.encode_range(range);
+            ws['!cols'] = [{ wch: 28 }, { wch: 16 }, { wch: 14 }, { wch: 28 }, { wch: 14 }, { wch: 14 }];
+            return ws;
+        }
+
+        function exportarAnalysesXLSX() {
+            if (analyses.length === 0) { alert('Nenhuma análise para exportar'); return; }
+
+            var wb = XLSX.utils.book_new();
+            wb.Props = { Title: 'SESI - Protocolo Fake News', Author: 'SESI' };
+
+            // Aba 1: Por ordem de inserção
+            var sorted1 = analyses.slice().sort(function(a,b){ return new Date(a.createdAt) - new Date(b.createdAt); });
+            XLSX.utils.book_append_sheet(wb, buildAnalysesSheet(sorted1, 'Análises por Ordem de Inserção'), '📋 Dados');
+
+            // Aba 2: Ordem alfabética por nome
+            var sorted2 = analyses.slice().sort(function(a,b){
+                var ua = users.find(function(u){ return u.id === a.userId; });
+                var ub = users.find(function(u){ return u.id === b.userId; });
+                var na = ua ? ua.name : ''; var nb = ub ? ub.name : '';
+                return na.localeCompare(nb, 'pt-BR');
+            });
+            XLSX.utils.book_append_sheet(wb, buildAnalysesSheet(sorted2, 'Análises em Ordem Alfabética'), '🔤 Alfabética');
+
+            // Aba 3: Por tema
+            XLSX.utils.book_append_sheet(wb, buildThemeSheet(analyses), '🏷️ Por Tema');
+
+            // Aba 4: Estatísticas
+            XLSX.utils.book_append_sheet(wb, buildStatsSheet(analyses), '📊 Estatísticas');
+
+            var date = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+            xlsxDownload(wb, 'SESI_Analises_' + date + '.xlsx');
+        }
+
+        function exportarUsuariosXLSX() {
+            if (!users || users.length === 0) { alert('Nenhum usuário para exportar'); return; }
+
+            var wb = XLSX.utils.book_new();
+            var ws = {};
+            var now = new Date().toLocaleDateString('pt-BR');
+            addSheetTitle(ws, 'Protocolo Científico para Fake News — SESI', 'Lista de Usuários | Gerado em: ' + now, 6);
+
+            var headers = ['Nome', 'E-mail', 'Nasc.', 'Sexo', 'Tipo', 'Cadastro'];
+            var headerStyle = getHeaderStyle();
+            headers.forEach(function(h, c) {
+                ws[encodeCell(3, c)] = { v: h, t: 's', s: headerStyle };
+            });
+
+            users.forEach(function(u, i) {
+                var sexLabel = u.sex === 'M' ? 'Masculino' : u.sex === 'F' ? 'Feminino' : (u.sex || '-');
+                var tipo = u.email === SUPER_ADMIN_EMAIL ? 'Super Admin' : (u.type === 'admin' ? 'Administrador' : 'Usuário');
+                var style = getDataStyle(i % 2 === 1);
+                var row = [u.name, u.email, u.birthDate || '-', sexLabel, tipo, u.createdAt ? new Date(u.createdAt).toLocaleDateString('pt-BR') : '-'];
+                row.forEach(function(val, c) {
+                    ws[encodeCell(4 + i, c)] = { v: val, t: 's', s: style };
+                });
+            });
+
+            var range = { s: { r: 0, c: 0 }, e: { r: 4 + users.length, c: 5 } };
+            ws['!ref'] = XLSX.utils.encode_range(range);
+            ws['!cols'] = [{ wch: 24 }, { wch: 28 }, { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 14 }];
+            XLSX.utils.book_append_sheet(wb, ws, '👥 Usuários');
+
+            var date = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+            xlsxDownload(wb, 'SESI_Usuarios_' + date + '.xlsx');
         }
 
         function exportarAvaliacoesCSV() {
             if (!evaluations || evaluations.length === 0) { alert('Nenhuma avaliação para exportar'); return; }
-            var csv = 'Usuario,E-mail,Nota,Recomenda,Data,Manchete,Comentario\n';
-            evaluations.forEach(function(e) {
-                csv += '"' + (e.userName || '-') + '","'
-                     + (e.userEmail || '-') + '","'
-                     + (e.rating || '-') + ' estrelas","'
-                     + (e.recommendation || '-') + '","'
-                     + new Date(e.createdAt).toLocaleDateString('pt-BR') + '","'
-                     + (e.newsTitle || '').replace(/"/g, '""') + '","'
-                     + (e.feedback || '').replace(/"/g, '""') + '"\n';
+
+            var wb = XLSX.utils.book_new();
+            var ws = {};
+            var now = new Date().toLocaleDateString('pt-BR');
+            addSheetTitle(ws, 'Protocolo Científico para Fake News — SESI', 'Avaliações do Sistema | Gerado em: ' + now, 7);
+
+            var headers = ['Usuário', 'E-mail', 'Nota', 'Recomenda', 'Data', 'Manchete', 'Comentário'];
+            var headerStyle = getHeaderStyle();
+            headers.forEach(function(h, c) {
+                ws[encodeCell(3, c)] = { v: h, t: 's', s: headerStyle };
             });
-            csvDownload(csv, 'SESI_Avaliacoes.csv');
+
+            var recMap = {'0':'Não recomendaria','1':'Talvez','2':'Sim, recomendo','3':'Recomendo muito!'};
+            evaluations.forEach(function(e, i) {
+                var style = getDataStyle(i % 2 === 1);
+                var row = [
+                    e.userName || '-', e.userEmail || '-',
+                    (e.rating || 0) + '/5 estrelas',
+                    recMap[String(e.recommendation)] || e.recommendation || '-',
+                    new Date(e.createdAt).toLocaleDateString('pt-BR'),
+                    e.newsTitle || '-',
+                    e.feedback || '-'
+                ];
+                row.forEach(function(val, c) {
+                    ws[encodeCell(4 + i, c)] = { v: val, t: 's', s: style };
+                });
+            });
+
+            var range = { s: { r: 0, c: 0 }, e: { r: 4 + evaluations.length, c: 6 } };
+            ws['!ref'] = XLSX.utils.encode_range(range);
+            ws['!cols'] = [{ wch: 22 }, { wch: 26 }, { wch: 12 }, { wch: 18 }, { wch: 12 }, { wch: 30 }, { wch: 40 }];
+            XLSX.utils.book_append_sheet(wb, ws, '⭐ Avaliações');
+
+            var date = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+            xlsxDownload(wb, 'SESI_Avaliacoes_' + date + '.xlsx');
         }
 
-        function exportarAnalysesCSV() {
-            if (analyses.length === 0) { alert('Nenhuma analise para exportar'); return; }
-            var csv = 'Nome,E-mail,Nasc.,Sexo,Data,ICI,CID-D,Tema,Manchete,Link/Texto\n';
-            analyses.forEach(function(a) {
-                var u = null;
-                for (var i = 0; i < users.length; i++) { if (users[i].id === a.userId) { u = users[i]; break; } }
-                var sexLabel = u && u.sex === 'M' ? 'Masculino' : u && u.sex === 'F' ? 'Feminino' : '-';
-                csv += '"' + (u ? u.name : '?') + '","'
-                     + (u ? u.email : '?') + '","'
-                     + (u && u.birthDate ? u.birthDate : '-') + '","'
-                     + sexLabel + '","'
-                     + new Date(a.createdAt).toLocaleDateString('pt-BR') + '","'
-                     + (a.ici !== undefined ? a.ici + '/10' : '-') + '","'
-                     + (a.cid || '-') + '","'
-                     + (a.theme || 'Geral') + '","'
-                     + (a.title || '').replace(/"/g, '""') + '","'
-                     + (a.url || a.content || '').replace(/"/g, '""').substring(0,100) + '"\n';
-            });
-            csvDownload(csv, 'SESI_Analises.csv');
-        }
-
-        // Inicializar ao carregar
+                // Inicializar ao carregar
         document.addEventListener('DOMContentLoaded', function() {
             // Mostrar loading enquanto verifica sessão
             document.getElementById('loginOverlay').style.display = 'flex';
@@ -3866,22 +4338,33 @@ showResultDirect(resultType, resultTitle, resultMessage, iciScore, cidNumber, ci
 
         // ========== PROMOVER ADMIN ==========
         function promoverAdmin(userId) {
-            if (!currentUser || currentUser.type !== 'admin') return;
+            if (!isSuperAdmin()) { alert('Apenas o Super Admin pode promover usuários.'); return; }
             if (!confirm('Tem certeza que deseja tornar este usuário Administrador?')) return;
-
             if (firebaseReady) {
                 db.collection('users').doc(userId).update({ type: 'admin' })
-                    .then(function() {
-                        alert('✅ Usuário promovido a Administrador!');
-                        carregarDadosAdmin();
-                    })
+                    .then(function() { alert('✅ Usuário promovido a Administrador!'); carregarDadosAdmin(); })
                     .catch(function(e) { alert('Erro: ' + e.message); });
-            } else {
-                for (var i = 0; i < users.length; i++) {
-                    if (users[i].id === userId) { users[i].type = 'admin'; break; }
-                }
-                alert('✅ Usuário promovido a Administrador!');
-                carregarDadosAdmin();
+            }
+        }
+
+        function rebaixarAdmin(userId) {
+            if (!isSuperAdmin()) { alert('Apenas o Super Admin pode remover administradores.'); return; }
+            if (!confirm('Tem certeza que deseja remover o cargo de Administrador deste usuário?')) return;
+            if (firebaseReady) {
+                db.collection('users').doc(userId).update({ type: 'user' })
+                    .then(function() { alert('✅ Cargo de Administrador removido!'); carregarDadosAdmin(); })
+                    .catch(function(e) { alert('Erro: ' + e.message); });
+            }
+        }
+
+        function excluirUsuario(userId, userEmail) {
+            if (!isSuperAdmin()) { alert('Apenas o Super Admin pode excluir usuários.'); return; }
+            if (userEmail === SUPER_ADMIN_EMAIL) { alert('O Super Admin não pode ser excluído.'); return; }
+            if (!confirm('⚠️ Tem certeza que deseja excluir permanentemente este usuário?\nEsta ação não pode ser desfeita.')) return;
+            if (firebaseReady) {
+                db.collection('users').doc(userId).delete()
+                    .then(function() { alert('✅ Usuário excluído com sucesso!'); carregarDadosAdmin(); })
+                    .catch(function(e) { alert('Erro: ' + e.message); });
             }
         }
 
