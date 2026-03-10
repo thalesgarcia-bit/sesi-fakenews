@@ -2339,11 +2339,12 @@
                         return db.collection('users').doc(cred.user.uid).set(userData);
                     })
                     .then(function() {
-                        firebase.auth().signOut();
-                        limparRegistro();
-                        mostrarLogin();
-                        mostrarMsgLogin('✅ Conta criada! Verifique seu e-mail e clique no link de confirmação para ativar sua conta.', 'success');
-                        document.getElementById('dicaSpam').style.display = 'block';
+                        firebase.auth().signOut().then(function() {
+                            limparRegistro();
+                            mostrarLogin();
+                            mostrarMsgLogin('✅ Conta criada! Verifique seu e-mail e clique no link de confirmação para ativar sua conta.', 'success');
+                            document.getElementById('dicaSpam').style.display = 'block';
+                        });
                     })
                     .catch(function(err) {
                         if (err.code === 'auth/email-already-in-use') mostrarMsgLogin('E-mail já registrado', 'error');
@@ -2381,6 +2382,9 @@
             document.getElementById('registerForm').style.display = 'none';
             document.getElementById('loginHeader').style.display = 'block';
             document.getElementById('registerFormHeader').style.display = 'none';
+            document.querySelector('.login-toggle').style.display = 'block';
+            document.getElementById('esqueciSenhaPanel').style.display = 'none';
+            document.getElementById('btnReenviarVerificacao').style.display = 'none';
         }
 
         function mostrarRegistro() {
