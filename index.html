@@ -1542,6 +1542,9 @@
                             <div style="opacity: 0.8; font-size: 0.85em;" id="headerUserType"></div>
                         </div>
                         <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap;">
+                            <button id="btnConfigPanel" onclick="mostrarPainelConfig()" style="display:none; height:36px; padding:0 14px; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.82em; white-space:nowrap; background:#6a1b9a;" onmouseover="this.style.background='#4a148c'" onmouseout="this.style.background='#6a1b9a'">⚙️ Config</button>
+                            <button id="btnModoDemo" onclick="iniciarModoDemo()" style="display:none; height:36px; padding:0 14px; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.82em; white-space:nowrap; background:#00796b;" onmouseover="this.style.background='#004d40'" onmouseout="this.style.background='#00796b'">🎭 Demo</button>
+                            <button id="btnNavLivre" onclick="ativarNavLivre()" style="display:none; height:36px; padding:0 14px; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.82em; white-space:nowrap; background:#37474f;" onmouseover="this.style.background='#263238'" onmouseout="this.style.background='#37474f'">🔓 Navegar</button>
                             <button id="btnAdminPanel" onclick="mostrarPainelAdmin()" style="display:none; height:36px; padding:0 14px; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.82em; white-space:nowrap; background:#f57c00;" onmouseover="this.style.background='#e65100'" onmouseout="this.style.background='#f57c00'">👑 Admin</button>
                             <button onclick="abrirModalSenha()" style="height:36px; padding:0 14px; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.82em; white-space:nowrap; background:#1565c0;" onmouseover="this.style.background='#0d47a1'" onmouseout="this.style.background='#1565c0'">🔑 Senha</button>
                             <button id="btnLogout" onclick="fazerLogout()" style="height:36px; padding:0 14px; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.82em; white-space:nowrap; background:#c62828;" onmouseover="this.style.background='#b71c1c'" onmouseout="this.style.background='#c62828'">🚪 Sair</button>
@@ -2263,6 +2266,7 @@
             document.getElementById('rodapeFixo').style.display = 'none';
             mostrarUsuarioNoHeader();
             mostrarMsgLogin('Bem-vindo, ' + currentUser.name + '!', 'success');
+            carregarConfigFirebase();
         }
 
         function verificarForca(senha) {
@@ -2393,9 +2397,14 @@
                 document.getElementById('headerUserType').textContent = '👑 Super Admin';
                 document.getElementById('btnAdminPanel').style.display = 'block';
                 document.getElementById('btnAdminPanel').style.background = '#f57c00';
+                document.getElementById('btnConfigPanel').style.display = 'block';
+                document.getElementById('btnModoDemo').style.display = 'block';
+                document.getElementById('btnNavLivre').style.display = 'block';
             } else if (currentUser.type === 'admin') {
                 document.getElementById('headerUserType').textContent = '🔧 Administrador';
                 document.getElementById('btnAdminPanel').style.display = 'block';
+                document.getElementById('btnModoDemo').style.display = 'block';
+                document.getElementById('btnNavLivre').style.display = 'block';
             } else {
                 document.getElementById('headerUserType').textContent = 'Usuário';
             }
@@ -2414,6 +2423,250 @@
             if (btnAdmin) btnAdmin.style.display = 'none';
             document.getElementById('loginEmail').value = '';
             document.getElementById('loginPassword').value = '';
+        }
+
+        // ========== NAVEGAÇÃO LIVRE ==========
+        var navLivreAtiva = false;
+
+        function ativarNavLivre() {
+            navLivreAtiva = true;
+            document.getElementById('barraNavLivre').style.display = 'block';
+            document.getElementById('btnNavLivre').style.background = '#c62828';
+            document.getElementById('btnNavLivre').textContent = '🔒 Nav ON';
+            // Se não tiver notícia carregada, cria uma demo
+            if (!currentNews.title) {
+                currentNews = { title: '[ Navegação Livre — Sem notícia ]', content: 'Modo de navegação administrativa ativa.', url: '' };
+            }
+            // Vai para a tela de diagnóstico se não estiver lá
+            document.getElementById('inputScreen').classList.remove('active');
+            document.getElementById('diagnosticScreen').classList.add('active');
+            document.getElementById('resultScreen').classList.remove('active');
+            currentStep = 1;
+            document.querySelectorAll('.step').forEach(function(s){ s.classList.remove('active'); });
+            document.getElementById('step1').classList.add('active');
+            var nd = document.getElementById('newsDisplay');
+            if (nd) nd.innerHTML = '<div style="padding:12px; background:#fff8e1; border-radius:8px; border-left:4px solid #f9a825; color:#555; font-size:0.9em;">🔓 <strong>Modo Navegação Livre</strong> — navegue entre as etapas livremente pela barra inferior.</div>';
+            scrollToTop();
+        }
+
+        function desativarNavLivre() {
+            navLivreAtiva = false;
+            document.getElementById('barraNavLivre').style.display = 'none';
+            document.getElementById('btnNavLivre').style.background = '#37474f';
+            document.getElementById('btnNavLivre').textContent = '🔓 Navegar';
+            document.getElementById('diagnosticScreen').classList.remove('active');
+            document.getElementById('inputScreen').classList.add('active');
+            currentNews = { title: '', content: '', url: '' };
+            scrollToTop();
+        }
+
+        function irParaEtapa(n) {
+            if (!navLivreAtiva) return;
+            if (n === 0) {
+                document.getElementById('diagnosticScreen').classList.remove('active');
+                document.getElementById('resultScreen').classList.remove('active');
+                document.getElementById('inputScreen').classList.add('active');
+                scrollToTop();
+                return;
+            }
+            document.getElementById('inputScreen').classList.remove('active');
+            document.getElementById('resultScreen').classList.remove('active');
+            document.getElementById('diagnosticScreen').classList.add('active');
+            document.querySelectorAll('.step').forEach(function(s){ s.classList.remove('active'); });
+            var stepEl = document.getElementById('step' + n);
+            if (stepEl) { stepEl.classList.add('active'); currentStep = n; }
+            scrollToTop();
+        }
+
+        function irParaResultado() {
+            if (!navLivreAtiva) return;
+            // Mostra resultado demo
+            document.getElementById('inputScreen').classList.remove('active');
+            document.getElementById('diagnosticScreen').classList.remove('active');
+            showResultDirect('warning', '[ Navegação Livre ]', 'Resultado de demonstração. Nenhuma análise foi registrada.', 5, '02', 'D-2', 'CID-D 02 — Informação parcialmente falsa', 'Suspeita de Desinformação');
+        }
+
+        // ========== MODO DEMONSTRAÇÃO ==========
+        var demoNews = {
+            title: 'Vacina contra COVID-19 causa infertilidade, diz estudo',
+            url: '',
+            content: 'Uma publicação viral nas redes sociais afirma que pesquisadores descobriram que a vacina contra COVID-19 causa infertilidade permanente em mulheres jovens. A publicação não cita fontes, não tem data e pede urgência no compartilhamento. Não há autor identificado e nenhum veículo de comunicação confiável confirmou a informação.'
+        };
+
+        var demoAnswers = [
+            null,   // step 0 (unused)
+            false,  // E1: fonte NÃO identificável
+            false,  // E2: autor NÃO rastreável
+            false,  // E3: SEM evidências primárias
+            false,  // E4: SEM data de publicação
+            false,  // E5: linguagem NÃO neutra
+            false,  // E6: TEM pedido urgente de compartilhamento
+            false   // E7: fontes independentes NÃO confirmam
+        ];
+
+        var demoStep = 0;
+
+        function iniciarModoDemo() {
+            currentNews = Object.assign({}, demoNews);
+            demoStep = 1;
+            resetAnswers();
+
+            document.getElementById('inputScreen').classList.remove('active');
+            document.getElementById('resultScreen').classList.remove('active');
+            document.getElementById('diagnosticScreen').classList.add('active');
+            document.querySelectorAll('.step').forEach(function(s){ s.classList.remove('active'); });
+            document.getElementById('step1').classList.add('active');
+            currentStep = 1;
+
+            var nd = document.getElementById('newsDisplay');
+            if (nd) nd.innerHTML = '<div style="padding:12px; background:#e8f5e9; border-radius:8px; border-left:4px solid #2e7d32; color:#555; font-size:0.9em; margin-bottom:8px;">🎭 <strong>Modo Demonstração</strong> — o sistema responderá automaticamente.</div>'
+                + '<div class="news-title">📰 ' + demoNews.title + '</div>'
+                + '<div class="news-content"><p>' + demoNews.content + '</p></div>';
+
+            scrollToTop();
+            // Auto-responder após 1.5s
+            setTimeout(executarDemoStep, 1500);
+        }
+
+        function executarDemoStep() {
+            if (demoStep < 1 || demoStep > 7) return;
+            var resposta = demoAnswers[demoStep];
+            var stepFns = [null, handleStep1, handleStep2, handleStep3, handleStep4, handleStep5, handleStep6, handleStep7];
+            if (stepFns[demoStep]) {
+                stepFns[demoStep](resposta);
+                demoStep++;
+                if (demoStep <= 7) setTimeout(executarDemoStep, 1200);
+            }
+        }
+
+        // ========== CONFIGURAÇÕES SUPERADMIN ==========
+        var configSistema = {
+            nomeInst: 'Escola SESI Uberaba',
+            emailContato: 'thales.garcia@fiemg.com.br',
+            titulo: 'Protocolo Científico para Fake News',
+            descricao: 'Cole aqui a notícia, manchete ou link que você deseja verificar. Você pode inserir um link completo ou apenas copiar e colar o texto da notícia.',
+            etapas: [
+                { pergunta: 'A informação possui FONTE IDENTIFICÁVEL?', descricao: 'Verifique se é possível identificar claramente quem publicou ou é responsável pela informação.' },
+                { pergunta: 'O AUTOR é rastreável e verificável?', descricao: 'Verifique se o autor possui histórico verificável e credibilidade na área.' },
+                { pergunta: 'Existem EVIDÊNCIAS PRIMÁRIAS que sustentam a informação?', descricao: 'Verifique se há dados, estudos, documentos ou registros que comprovem a informação.' },
+                { pergunta: 'A informação possui DATA DE PUBLICAÇÃO identificável?', descricao: 'Verifique se a data de publicação está claramente indicada.' },
+                { pergunta: 'A linguagem é NEUTRA e OBJETIVA?', descricao: 'Verifique se o texto usa linguagem equilibrada, sem apelos emocionais excessivos.' },
+                { pergunta: 'A notícia é LIVRE de pedidos de compartilhamento urgente?', descricao: 'Verifique se o conteúdo não pressiona o leitor a compartilhar imediatamente.' },
+                { pergunta: 'FONTES INDEPENDENTES confirmam a informação?', descricao: 'Verifique em fact-checkers e veículos independentes se a informação foi confirmada.' }
+            ],
+            temas: ['Saúde', 'Política', 'Economia', 'Ciência', 'Meio Ambiente', 'Segurança', 'Educação', 'Religião', 'Tecnologia', 'Alimentação']
+        };
+
+        function carregarConfigFirebase() {
+            if (!firebaseReady) return;
+            db.collection('config').doc('sistema').get().then(function(doc) {
+                if (doc.exists) {
+                    var d = doc.data();
+                    if (d.nomeInst) configSistema.nomeInst = d.nomeInst;
+                    if (d.emailContato) configSistema.emailContato = d.emailContato;
+                    if (d.titulo) configSistema.titulo = d.titulo;
+                    if (d.descricao) configSistema.descricao = d.descricao;
+                    if (d.etapas) configSistema.etapas = d.etapas;
+                    if (d.temas) configSistema.temas = d.temas;
+                    aplicarConfiguracoes();
+                }
+            }).catch(function(e) { console.warn('Config não encontrada:', e); });
+        }
+
+        function aplicarConfiguracoes() {
+            // Título do sistema
+            var titleEls = document.querySelectorAll('.input-title');
+            if (titleEls.length > 0) titleEls[0].textContent = '🔍 ' + configSistema.titulo;
+            // Descrição
+            var descEls = document.querySelectorAll('.input-description');
+            if (descEls.length > 0) descEls[0].textContent = configSistema.descricao;
+            // Etapas
+            configSistema.etapas.forEach(function(etapa, i) {
+                var stepEl = document.getElementById('step' + (i+1));
+                if (!stepEl) return;
+                var qEl = stepEl.querySelector('.question');
+                if (qEl) qEl.textContent = etapa.pergunta;
+                var dEl = stepEl.querySelector('.description');
+                if (dEl) dEl.textContent = etapa.descricao;
+            });
+        }
+
+        function mostrarPainelConfig() {
+            if (!isSuperAdmin()) { alert('Apenas o Super Admin pode acessar as configurações.'); return; }
+            // Preencher campos
+            document.getElementById('cfgNomeInst').value = configSistema.nomeInst;
+            document.getElementById('cfgEmail').value = configSistema.emailContato;
+            document.getElementById('cfgTitulo').value = configSistema.titulo;
+            document.getElementById('cfgDescricao').value = configSistema.descricao;
+
+            // Etapas
+            var etapasHtml = '';
+            configSistema.etapas.forEach(function(e, i) {
+                etapasHtml += '<div style="margin-bottom:10px; padding:10px; background:#f9f0ff; border-radius:8px;">'
+                    + '<div style="font-size:0.8em; color:#6a1b9a; font-weight:bold; margin-bottom:6px;">Etapa ' + (i+1) + '</div>'
+                    + '<input id="cfgEtapa' + i + '_q" type="text" value="' + e.pergunta.replace(/"/g, '&quot;') + '" style="width:100%; padding:7px; border:1px solid #ce93d8; border-radius:5px; font-size:0.85em; margin-bottom:5px; box-sizing:border-box;">'
+                    + '<input id="cfgEtapa' + i + '_d" type="text" value="' + e.descricao.replace(/"/g, '&quot;') + '" style="width:100%; padding:7px; border:1px solid #ce93d8; border-radius:5px; font-size:0.85em; box-sizing:border-box;">'
+                    + '</div>';
+            });
+            document.getElementById('cfgEtapas').innerHTML = etapasHtml;
+
+            // Temas
+            renderizarTemas();
+            document.getElementById('modalConfig').style.display = 'block';
+        }
+
+        function renderizarTemas() {
+            var html = '';
+            configSistema.temas.forEach(function(t, i) {
+                html += '<span style="background:#e1bee7; color:#4a148c; padding:5px 10px; border-radius:20px; font-size:0.85em; display:flex; align-items:center; gap:6px;">'
+                    + t + '<button onclick="removerTema(' + i + ')" style="background:none; border:none; color:#c62828; cursor:pointer; font-size:0.9em; padding:0; line-height:1;">✕</button></span>';
+            });
+            document.getElementById('cfgTemas').innerHTML = html;
+        }
+
+        function adicionarTema() {
+            var val = document.getElementById('cfgNovoTema').value.trim();
+            if (!val) return;
+            if (configSistema.temas.indexOf(val) !== -1) { alert('Tema já existe!'); return; }
+            configSistema.temas.push(val);
+            document.getElementById('cfgNovoTema').value = '';
+            renderizarTemas();
+        }
+
+        function removerTema(i) {
+            configSistema.temas.splice(i, 1);
+            renderizarTemas();
+        }
+
+        function salvarConfiguracoes() {
+            configSistema.nomeInst = document.getElementById('cfgNomeInst').value.trim();
+            configSistema.emailContato = document.getElementById('cfgEmail').value.trim();
+            configSistema.titulo = document.getElementById('cfgTitulo').value.trim();
+            configSistema.descricao = document.getElementById('cfgDescricao').value.trim();
+            configSistema.etapas.forEach(function(e, i) {
+                var q = document.getElementById('cfgEtapa' + i + '_q');
+                var d = document.getElementById('cfgEtapa' + i + '_d');
+                if (q) e.pergunta = q.value.trim();
+                if (d) e.descricao = d.value.trim();
+            });
+
+            if (firebaseReady) {
+                db.collection('config').doc('sistema').set(configSistema)
+                    .then(function() {
+                        aplicarConfiguracoes();
+                        fecharModalConfig();
+                        alert('✅ Configurações salvas com sucesso!');
+                    })
+                    .catch(function(e) { alert('Erro ao salvar: ' + e.message); });
+            } else {
+                aplicarConfiguracoes();
+                fecharModalConfig();
+                alert('✅ Configurações aplicadas (modo local)!');
+            }
+        }
+
+        function fecharModalConfig() {
+            document.getElementById('modalConfig').style.display = 'none';
         }
 
         // ========== VERIFICAÇÃO DE E-MAIL ==========
@@ -4594,6 +4847,88 @@ showResultDirect(resultType, resultTitle, resultMessage, iciScore, cidNumber, ci
     <!-- Rodapé fixo global -->
     <div id="rodapeFixo" style="position:fixed; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.55); color:rgba(255,255,255,0.88); text-align:center; padding:9px 20px; font-size:0.82em; line-height:1.6; z-index:99998; box-sizing:border-box;">
         🔬 <strong>Protocolo Científico para Fake News</strong> | Escola SESI Uberaba — Alberto Martins Fontoura Borges | Ferramenta Educacional &nbsp;|&nbsp; 📧 thales.garcia@fiemg.com.br
+    </div>
+
+    <!-- ========== MODAL CONFIGURAÇÕES SUPERADMIN ========== -->
+    <div id="modalConfig" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; overflow-y:auto;">
+        <div style="background:white; max-width:750px; margin:40px auto; border-radius:12px; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+            <div style="background:linear-gradient(135deg,#6a1b9a,#4a148c); padding:20px 25px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <div style="color:white; font-size:1.2em; font-weight:bold;">⚙️ Configurações do Sistema</div>
+                    <div style="color:rgba(255,255,255,0.8); font-size:0.85em;">Apenas Super Admin</div>
+                </div>
+                <button onclick="fecharModalConfig()" style="background:none; border:none; color:white; font-size:1.4em; cursor:pointer; opacity:0.8;">✕</button>
+            </div>
+            <div style="padding:25px;">
+
+                <!-- Instituição -->
+                <div style="margin-bottom:20px;">
+                    <div style="font-weight:bold; color:#4a148c; font-size:1em; margin-bottom:10px; border-bottom:2px solid #e1bee7; padding-bottom:6px;">🏫 Instituição</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div>
+                            <label style="font-size:0.85em; color:#555; display:block; margin-bottom:4px;">Nome da Instituição</label>
+                            <input id="cfgNomeInst" type="text" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9em; box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.85em; color:#555; display:block; margin-bottom:4px;">E-mail de Contato</label>
+                            <input id="cfgEmail" type="email" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9em; box-sizing:border-box;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tela inicial -->
+                <div style="margin-bottom:20px;">
+                    <div style="font-weight:bold; color:#4a148c; font-size:1em; margin-bottom:10px; border-bottom:2px solid #e1bee7; padding-bottom:6px;">🏠 Tela Inicial</div>
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.85em; color:#555; display:block; margin-bottom:4px;">Título do Sistema</label>
+                        <input id="cfgTitulo" type="text" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9em; box-sizing:border-box;">
+                    </div>
+                    <div>
+                        <label style="font-size:0.85em; color:#555; display:block; margin-bottom:4px;">Descrição/Subtítulo</label>
+                        <textarea id="cfgDescricao" rows="2" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9em; box-sizing:border-box; resize:vertical;"></textarea>
+                    </div>
+                </div>
+
+                <!-- Etapas -->
+                <div style="margin-bottom:20px;">
+                    <div style="font-weight:bold; color:#4a148c; font-size:1em; margin-bottom:10px; border-bottom:2px solid #e1bee7; padding-bottom:6px;">📋 Perguntas das Etapas</div>
+                    <div id="cfgEtapas"></div>
+                </div>
+
+                <!-- Temas -->
+                <div style="margin-bottom:20px;">
+                    <div style="font-weight:bold; color:#4a148c; font-size:1em; margin-bottom:10px; border-bottom:2px solid #e1bee7; padding-bottom:6px;">🏷️ Temas Disponíveis</div>
+                    <div id="cfgTemas" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;"></div>
+                    <div style="display:flex; gap:8px;">
+                        <input id="cfgNovoTema" type="text" placeholder="Novo tema..." style="flex:1; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9em;">
+                        <button onclick="adicionarTema()" style="padding:8px 16px; background:#6a1b9a; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">+ Adicionar</button>
+                    </div>
+                </div>
+
+                <!-- Botões -->
+                <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px;">
+                    <button onclick="fecharModalConfig()" style="padding:10px 20px; background:#eee; color:#555; border:none; border-radius:6px; cursor:pointer; font-weight:600;">Cancelar</button>
+                    <button onclick="salvarConfiguracoes()" style="padding:10px 20px; background:#6a1b9a; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">💾 Salvar Configurações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== BARRA NAV LIVRE ========== -->
+    <div id="barraNavLivre" style="display:none; position:fixed; bottom:0; left:0; right:0; background:linear-gradient(135deg,#37474f,#263238); padding:10px 20px; z-index:8888; box-shadow:0 -4px 12px rgba(0,0,0,0.3);">
+        <div style="max-width:900px; margin:0 auto; display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:center;">
+            <span style="color:#90caf9; font-size:0.85em; font-weight:bold;">🔓 Navegação Livre:</span>
+            <button onclick="irParaEtapa(0)" style="padding:6px 12px; background:#455a64; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">📝 Inserir</button>
+            <button onclick="irParaEtapa(1)" style="padding:6px 12px; background:#455a64; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">E1</button>
+            <button onclick="irParaEtapa(2)" style="padding:6px 12px; background:#455a64; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">E2</button>
+            <button onclick="irParaEtapa(3)" style="padding:6px 12px; background:#455a64; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">E3</button>
+            <button onclick="irParaEtapa(4)" style="padding:6px 12px; background:#455a64; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">E4</button>
+            <button onclick="irParaEtapa(5)" style="padding:6px 12px; background:#455a64; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">E5</button>
+            <button onclick="irParaEtapa(6)" style="padding:6px 12px; background:#455a64; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">E6</button>
+            <button onclick="irParaEtapa(7)" style="padding:6px 12px; background:#455a64; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">E7</button>
+            <button onclick="irParaResultado()" style="padding:6px 12px; background:#1565c0; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">🏁 Resultado</button>
+            <button onclick="desativarNavLivre()" style="padding:6px 12px; background:#c62828; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">✕ Sair</button>
+        </div>
     </div>
 </body>
 </html>
