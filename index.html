@@ -1436,18 +1436,20 @@
                 </div>
                 <button id="btnEntrar" class="login-btn" onclick="fazerLogin()">ENTRAR</button>
                 <button id="btnReenviarVerificacao" onclick="reenviarVerificacao()" style="display:none; width:100%; margin-top:8px; padding:10px; background:#e65100; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.9em;">📧 Reenviar e-mail de verificação</button>
-                <div class="login-toggle">Não tem conta? <a id="linkRegistro" onclick="mostrarRegistro()">Registre-se aqui</a> &nbsp;|&nbsp; <a onclick="mostrarEsqueciSenha()">Esqueci minha senha</a></div>
+                <div class="login-toggle">Não tem conta? <a id="linkRegistro" onclick="mostrarRegistro()">Registre-se aqui</a> &nbsp;|&nbsp; <a onclick="mostrarEsqueciSenha()" style="color:#003f87; cursor:pointer; text-decoration:underline;">Esqueci minha senha</a></div>
+            </div>
 
-            <!-- Painel Esqueci Senha -->
+            <!-- Painel Esqueci Senha (fora do loginForm, dentro da login-box) -->
             <div id="esqueciSenhaPanel" style="display:none; margin-top:10px;">
                 <div style="border-top:1px solid #ddd; padding-top:15px;">
                     <p style="color:#555; font-size:0.9em; margin-bottom:10px;">Digite seu e-mail para receber o link de redefinição de senha:</p>
                     <input type="email" id="esqueciEmail" placeholder="seu@email.com" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:0.9em; margin-bottom:10px; box-sizing:border-box;">
                     <button onclick="enviarRedefinicaoSenha()" style="width:100%; padding:10px; background:#003f87; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.9em;">Enviar link de redefinição</button>
                     <div id="msgEsqueci" style="margin-top:8px; font-size:0.85em; text-align:center;"></div>
-                    <div style="text-align:center; margin-top:10px;"><a onclick="ocultarEsqueciSenha()" style="color:#003f87; cursor:pointer; font-size:0.85em;">← Voltar ao login</a></div>
+                    <div style="text-align:center; margin-top:10px;"><a onclick="ocultarEsqueciSenha()" style="color:#003f87; cursor:pointer; font-size:0.9em; font-weight:600;">← Voltar ao login</a></div>
                 </div>
             </div>
+            <div style="display:none">
             </div>
 
             <div id="registerFormHeader" style="text-align:center; margin-bottom:20px; display:none;">
@@ -2411,16 +2413,20 @@
         function mostrarEsqueciSenha() {
             document.getElementById('esqueciSenhaPanel').style.display = 'block';
             document.getElementById('loginForm').style.display = 'none';
-            document.querySelector('.login-toggle').style.display = 'none';
             document.getElementById('btnReenviarVerificacao').style.display = 'none';
+            document.getElementById('loginMsg').innerHTML = '';
+            // Hide login header (logo + title)
+            var loginHeader = document.getElementById('loginHeader');
+            if (loginHeader) loginHeader.style.display = 'none';
         }
 
         function ocultarEsqueciSenha() {
             document.getElementById('esqueciSenhaPanel').style.display = 'none';
             document.getElementById('loginForm').style.display = 'block';
-            document.querySelector('.login-toggle').style.display = 'block';
             document.getElementById('msgEsqueci').textContent = '';
             document.getElementById('esqueciEmail').value = '';
+            var loginHeader = document.getElementById('loginHeader');
+            if (loginHeader) loginHeader.style.display = 'block';
         }
 
         function enviarRedefinicaoSenha() {
