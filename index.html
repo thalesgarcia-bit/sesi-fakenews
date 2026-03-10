@@ -3418,6 +3418,31 @@
 
             // Verificar sessão Firebase ao carregar página
             if (firebaseReady) {
+                // ── Processar link de verificação do Firebase ──────────────────────
+                (function() {
+                    var params = new URLSearchParams(window.location.search);
+                    var mode = params.get('mode');
+                    var oobCode = params.get('oobCode');
+                    if (mode === 'verifyEmail' && oobCode) {
+                        // Limpar URL
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        firebase.auth().applyActionCode(oobCode)
+                            .then(function() {
+                                // E-mail verificado com sucesso — mostrar mensagem e ir para login
+                                mostrarLogin();
+                                mostrarMsgLogin('✅ E-mail verificado com sucesso! Agora faça login para entrar.', 'success');
+                            })
+                            .catch(function(err) {
+                                mostrarLogin();
+                                if (err.code === 'auth/invalid-action-code') {
+                                    mostrarMsgLogin('⚠️ Este link de verificação já foi usado ou expirou. Faça login normalmente se já verificou seu e-mail.', 'error');
+                                } else {
+                                    mostrarMsgLogin('Erro ao verificar e-mail: ' + err.message, 'error');
+                                }
+                            });
+                    }
+                })();
+
                 firebase.auth().onAuthStateChanged(function(user) {
                     // Ignorado durante registro — tratado por fazerRegistro()
                     if (ignorarAuthChange) return;
