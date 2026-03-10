@@ -2393,6 +2393,13 @@
             var userPanel = document.getElementById('userPanel');
             userPanel.style.display = 'flex';
             document.getElementById('headerUserName').textContent = currentUser.name;
+
+            // Reset todos os botões antes de mostrar os corretos
+            ['btnAdminPanel','btnConfigPanel','btnModoDemo','btnNavLivre'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+
             if (isSuperAdmin()) {
                 document.getElementById('headerUserType').textContent = '👑 Super Admin';
                 document.getElementById('btnAdminPanel').style.display = 'block';
@@ -3399,6 +3406,12 @@
             if (firebaseReady) {
                 firebase.auth().onAuthStateChanged(function(user) {
                     if (user) {
+                        // Verifica e-mail antes de restaurar sessão
+                        var emailsIsentos = ['admin@sesi.com.br', 'thalesgarciacunha@gmail.com'];
+                        if (!user.emailVerified && emailsIsentos.indexOf(user.email) === -1) {
+                            firebase.auth().signOut();
+                            return;
+                        }
                         // Usuário ainda logado — restaurar sessão
                         db.collection('users').doc(user.uid).get().then(function(doc) {
                             if (doc.exists) {
