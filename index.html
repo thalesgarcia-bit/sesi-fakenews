@@ -2340,9 +2340,10 @@
                     })
                     .then(function() {
                         firebase.auth().signOut();
-                        mostrarMsgLogin('✅ Conta criada! Verifique seu e-mail e clique no link de confirmação antes de fazer login.', 'success');
+                        limparRegistro();
+                        mostrarLogin();
+                        mostrarMsgLogin('✅ Conta criada! Verifique seu e-mail e clique no link de confirmação para ativar sua conta.', 'success');
                         document.getElementById('dicaSpam').style.display = 'block';
-                        setTimeout(function() { limparRegistro(); mostrarLogin(); document.getElementById('dicaSpam').style.display = 'none'; }, 8000);
                     })
                     .catch(function(err) {
                         if (err.code === 'auth/email-already-in-use') mostrarMsgLogin('E-mail já registrado', 'error');
@@ -2921,7 +2922,9 @@
                         + '<div>' + gravTag + '</div>'
                         + '<div>' + cidTag + '</div>'
                         + '<div>' + temaTag + '</div>'
-                        + '<div><strong>' + manchete + '</strong><br>' + linkOuTexto + '</div>'
+                        + '<div>'
+                        + (a.isDemo ? '<span style="background:#e65100;color:white;font-size:0.72em;padding:2px 6px;border-radius:4px;margin-right:5px;font-weight:bold;">🎭 DEMO</span>' : '')
+                        + '<strong>' + manchete + '</strong><br>' + linkOuTexto + '</div>'
                         + '</div>';
                 });
             }
@@ -3029,7 +3032,7 @@
                     a.cidSeverity || '-',
                     a.cid || '-',
                     a.theme || 'Geral',
-                    (a.title || a.url || a.content || '').substring(0, 120)
+                    (a.isDemo ? '[DEMO] ' : '') + (a.title || a.url || a.content || '').substring(0, 120)
                 ];
                 row.forEach(function(val, c) {
                     var cell = encodeCell(4 + i, c);
@@ -3099,7 +3102,7 @@
                         new Date(a.createdAt).toLocaleDateString('pt-BR'),
                         a.ici !== undefined ? a.ici + '/10' : '-',
                         a.cidSeverity || '-', a.cid || '-', a.theme || 'Geral',
-                        (a.title || a.url || a.content || '').substring(0, 120)
+                        (a.isDemo ? '[DEMO] ' : '') + (a.title || a.url || a.content || '').substring(0, 120)
                     ];
                     row.forEach(function(val, c) {
                         ws[encodeCell(rowIdx, c)] = { v: val, t: 's', s: style };
@@ -4184,6 +4187,7 @@
                         cid: cidNumber || cidSeverity,
                         cidSeverity: cidSeverity,
                         theme: detectedTheme,
+                        isDemo: (demoStep > 1),
                         createdAt: new Date().toISOString()
                     };
                     analyses.push(analysisData);
