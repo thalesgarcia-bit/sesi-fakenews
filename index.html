@@ -2162,6 +2162,8 @@
         };
 
         var firebaseReady = false;
+        var ignorarAuthChange = false;
+        var registrandoAgora = false;
         var SUPER_ADMIN_EMAIL = 'thalesgarciacunha@gmail.com';
 
         function isSuperAdmin() {
@@ -2260,6 +2262,16 @@
         }
 
         function entrarNoApp() {
+            // VERIFICAÇÃO FINAL DE SEGURANÇA — bloqueia entrada sem e-mail verificado
+            var firebaseUser = firebase.auth().currentUser;
+            var emailsIsentos = ['admin@sesi.com.br', 'thalesgarciacunha@gmail.com'];
+            if (firebaseUser && !firebaseUser.emailVerified && emailsIsentos.indexOf(firebaseUser.email) === -1) {
+                firebase.auth().signOut();
+                mostrarMsgLogin('⚠️ E-mail não verificado. Verifique sua caixa de entrada e clique no link enviado antes de entrar.', 'error');
+                document.getElementById('btnReenviarVerificacao').style.display = 'block';
+                document.getElementById('dicaSpam').style.display = 'block';
+                return;
+            }
             document.getElementById('loginOverlay').classList.add('hidden');
             document.getElementById('loginOverlay').style.display = 'none';
             document.querySelector('.app-container').style.display = 'block';
@@ -2333,6 +2345,8 @@
             var userData = { name: name, email: email, type: 'user', birthDate: birthDate, sex: sex, createdAt: new Date().toISOString() };
 
             if (firebaseReady) {
+                ignorarAuthChange = true;
+                registrandoAgora = true;
                 firebase.auth().createUserWithEmailAndPassword(email, senha)
                     .then(function(cred) {
                         cred.user.sendEmailVerification();
@@ -2340,8 +2354,17 @@
                     })
                     .then(function() {
                         firebase.auth().signOut().then(function() {
+                            ignorarAuthChange = false;
+                            registrandoAgora = false;
                             limparRegistro();
-                            mostrarLogin();
+                            // Forçar esconder tudo do registro e mostrar login
+                            document.getElementById('registerForm').style.display = 'none';
+                            document.getElementById('registerFormHeader').style.display = 'none';
+                            document.getElementById('loginForm').style.display = 'block';
+                            document.getElementById('loginHeader').style.display = 'block';
+                            document.querySelector('.login-toggle').style.display = 'block';
+                            document.getElementById('esqueciSenhaPanel').style.display = 'none';
+                            document.getElementById('btnReenviarVerificacao').style.display = 'none';
                             mostrarMsgLogin('✅ Conta criada! Verifique seu e-mail e clique no link de confirmação para ativar sua conta.', 'success');
                             document.getElementById('dicaSpam').style.display = 'block';
                         });
@@ -3412,27 +3435,22 @@
             // Verificar sessão Firebase ao carregar página
             if (firebaseReady) {
                 firebase.auth().onAuthStateChanged(function(user) {
-                    if (user) {
-                        // Verifica e-mail antes de restaurar sessão
-                        var emailsIsentos = ['admin@sesi.com.br', 'thalesgarciacunha@gmail.com'];
-                        if (!user.emailVerified && emailsIsentos.indexOf(user.email) === -1) {
-                            firebase.auth().signOut();
-                            return;
-                        }
-                        // Usuário ainda logado — restaurar sessão
-                        db.collection('users').doc(user.uid).get().then(function(doc) {
-                            if (doc.exists) {
-                                currentUser = Object.assign({ id: doc.id }, doc.data());
-                                document.getElementById('loginOverlay').style.display = 'none';
-                                document.querySelector('.app-container').style.display = 'block';
-                                document.getElementById('rodapeFixo').style.display = 'none';
-                                mostrarUsuarioNoHeader();
-                            }
-                        }).catch(function(e) {
-                            console.warn('Erro ao restaurar sessão:', e);
-                        });
+                    if (!user) return; // sem usuário, mantém tela de login
+                    var emailsIsentos = ['admin@sesi.com.br', 'thalesgarciacunha@gmail.com'];
+                    // Bloquear acesso se e-mail não verificado
+                    if (!user.emailVerified && emailsIsentos.indexOf(user.email) === -1) {
+                        firebase.auth().signOut();
+                        return;
                     }
-                    // Se não há usuário, mantém tela de login (já está visível)
+                    // Restaurar sessão
+                    db.collection('users').doc(user.uid).get().then(function(doc) {
+                        if (doc.exists) {
+                            currentUser = Object.assign({ id: doc.id }, doc.data());
+                            entrarNoApp();
+                        }
+                    }).catch(function(e) {
+                        console.warn('Erro ao restaurar sessão:', e);
+                    });
                 });
             }
         });
