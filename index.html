@@ -2205,25 +2205,27 @@
                 // Firebase login
                 firebase.auth().signInWithEmailAndPassword(email, senha)
                     .then(function(cred) {
-                        var emailsIsentos = ['admin@sesi.com.br', SUPER_ADMIN_EMAIL];
-                        if (!cred.user.emailVerified && emailsIsentos.indexOf(email) === -1) {
+                        // Força reload para garantir emailVerified atualizado
+                        return cred.user.reload().then(function() {
+                            return firebase.auth().currentUser;
+                        });
+                    })
+                    .then(function(u) {
+                        if (!u) return null;
+                        var isentos = ['admin@sesi.com.br', SUPER_ADMIN_EMAIL];
+                        if (!u.emailVerified && isentos.indexOf(u.email) === -1) {
                             firebase.auth().signOut();
                             mostrarMsgLogin('⚠️ E-mail não verificado. Verifique sua caixa de entrada (e a pasta Spam) e clique no link enviado.', 'error');
                             document.getElementById('btnReenviarVerificacao').style.display = 'block';
                             document.getElementById('dicaSpam').style.display = 'block';
-                            document.getElementById('btnReenviarVerificacao').setAttribute('data-user-uid', cred.user.uid);
-                            window._pendingVerifEmail = email;
-                            window._pendingVerifSenha = senha;
                             return null;
                         }
-                        return db.collection('users').doc(cred.user.uid).get();
+                        return db.collection('users').doc(u.uid).get();
                     })
                     .then(function(doc) {
                         if (!doc) return;
-                        console.log('Firestore doc.exists:', doc.exists, '| doc.id:', doc.id, '| data:', JSON.stringify(doc.data()));
                         if (doc.exists) {
                             currentUser = Object.assign({ id: doc.id }, doc.data());
-                            // Garante que o Super Admin sempre tenha type admin
                             if (currentUser.email === SUPER_ADMIN_EMAIL && currentUser.type !== 'admin') {
                                 db.collection('users').doc(doc.id).update({ type: 'admin' });
                                 currentUser.type = 'admin';
@@ -2262,16 +2264,6 @@
         }
 
         function entrarNoApp() {
-            // VERIFICAÇÃO FINAL DE SEGURANÇA — bloqueia entrada sem e-mail verificado
-            var firebaseUser = firebase.auth().currentUser;
-            var emailsIsentos = ['admin@sesi.com.br', 'thalesgarciacunha@gmail.com'];
-            if (firebaseUser && !firebaseUser.emailVerified && emailsIsentos.indexOf(firebaseUser.email) === -1) {
-                firebase.auth().signOut();
-                mostrarMsgLogin('⚠️ E-mail não verificado. Verifique sua caixa de entrada e clique no link enviado antes de entrar.', 'error');
-                document.getElementById('btnReenviarVerificacao').style.display = 'block';
-                document.getElementById('dicaSpam').style.display = 'block';
-                return;
-            }
             document.getElementById('loginOverlay').classList.add('hidden');
             document.getElementById('loginOverlay').style.display = 'none';
             document.querySelector('.app-container').style.display = 'block';
@@ -2346,28 +2338,20 @@
 
             if (firebaseReady) {
                 ignorarAuthChange = true;
-                registrandoAgora = true;
                 firebase.auth().createUserWithEmailAndPassword(email, senha)
                     .then(function(cred) {
                         cred.user.sendEmailVerification();
                         return db.collection('users').doc(cred.user.uid).set(userData);
                     })
                     .then(function() {
-                        firebase.auth().signOut().then(function() {
-                            ignorarAuthChange = false;
-                            registrandoAgora = false;
-                            limparRegistro();
-                            // Forçar esconder tudo do registro e mostrar login
-                            document.getElementById('registerForm').style.display = 'none';
-                            document.getElementById('registerFormHeader').style.display = 'none';
-                            document.getElementById('loginForm').style.display = 'block';
-                            document.getElementById('loginHeader').style.display = 'block';
-                            document.querySelector('.login-toggle').style.display = 'block';
-                            document.getElementById('esqueciSenhaPanel').style.display = 'none';
-                            document.getElementById('btnReenviarVerificacao').style.display = 'none';
-                            mostrarMsgLogin('✅ Conta criada! Verifique seu e-mail e clique no link de confirmação para ativar sua conta.', 'success');
-                            document.getElementById('dicaSpam').style.display = 'block';
-                        });
+                        return firebase.auth().signOut();
+                    })
+                    .then(function() {
+                        ignorarAuthChange = false;
+                        limparRegistro();
+                        mostrarLogin();
+                        mostrarMsgLogin('✅ Conta criada! Verifique seu e-mail antes de fazer login. Veja também a pasta Spam.', 'success');
+                        document.getElementById('dicaSpam').style.display = 'block';
                     })
                     .catch(function(err) {
                         if (err.code === 'auth/email-already-in-use') mostrarMsgLogin('E-mail já registrado', 'error');
@@ -3435,21 +3419,26 @@
             // Verificar sessão Firebase ao carregar página
             if (firebaseReady) {
                 firebase.auth().onAuthStateChanged(function(user) {
-                    if (!user) return; // sem usuário, mantém tela de login
-                    var emailsIsentos = ['admin@sesi.com.br', 'thalesgarciacunha@gmail.com'];
-                    // Bloquear acesso se e-mail não verificado
-                    if (!user.emailVerified && emailsIsentos.indexOf(user.email) === -1) {
-                        firebase.auth().signOut();
-                        return;
-                    }
-                    // Restaurar sessão
-                    db.collection('users').doc(user.uid).get().then(function(doc) {
-                        if (doc.exists) {
-                            currentUser = Object.assign({ id: doc.id }, doc.data());
-                            entrarNoApp();
+                    // Ignorado durante registro — tratado por fazerRegistro()
+                    if (ignorarAuthChange) return;
+                    if (!user) return;
+                    var isentos = ['admin@sesi.com.br', 'thalesgarciacunha@gmail.com'];
+                    // Força reload para obter emailVerified atualizado do servidor
+                    user.reload().then(function() {
+                        var u = firebase.auth().currentUser;
+                        if (!u) return;
+                        if (!u.emailVerified && isentos.indexOf(u.email) === -1) {
+                            // Não verificado — faz logout silencioso
+                            firebase.auth().signOut();
+                            return;
                         }
-                    }).catch(function(e) {
-                        console.warn('Erro ao restaurar sessão:', e);
+                        // Verificado — restaura sessão
+                        db.collection('users').doc(u.uid).get().then(function(doc) {
+                            if (doc.exists) {
+                                currentUser = Object.assign({ id: doc.id }, doc.data());
+                                entrarNoApp();
+                            }
+                        });
                     });
                 });
             }
