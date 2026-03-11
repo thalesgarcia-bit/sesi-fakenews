@@ -1409,6 +1409,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
     <!-- LOGIN OVERLAY -->
@@ -1542,6 +1543,7 @@
                             <div style="opacity: 0.8; font-size: 0.85em;" id="headerUserType"></div>
                         </div>
                         <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap;">
+                            <button id="btnOnline" onclick="mostrarMonitorOnline()" style="display:none; height:36px; padding:0 14px; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.82em; white-space:nowrap; background:#1a237e;" onmouseover="this.style.background='#0d47a1'" onmouseout="this.style.background='#1a237e'">🟢 Online</button>
                             <button id="btnConfigPanel" onclick="mostrarPainelConfig()" style="display:none; height:36px; padding:0 14px; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.82em; white-space:nowrap; background:#6a1b9a;" onmouseover="this.style.background='#4a148c'" onmouseout="this.style.background='#6a1b9a'">⚙️ Config</button>
                             <button id="btnModoDemo" onclick="iniciarModoDemo()" style="display:none; height:36px; padding:0 14px; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.82em; white-space:nowrap; background:#00796b;" onmouseover="this.style.background='#004d40'" onmouseout="this.style.background='#00796b'">🎭 Demo</button>
                             <button id="btnNavLivre" onclick="ativarNavLivre()" style="display:none; height:36px; padding:0 14px; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.82em; white-space:nowrap; background:#37474f;" onmouseover="this.style.background='#263238'" onmouseout="this.style.background='#37474f'">🔓 Navegar</button>
@@ -1561,22 +1563,14 @@
             <div class="welcome-screen" id="welcomeScreen">
                 <div class="container-box welcome-screen-content">
                     <div class="welcome-icon">🔬</div>
-                    <div class="welcome-title">Bem-vindo ao Protocolo Científico — SESI</div>
-                    <div class="welcome-subtitle">
-                        Uma ferramenta científica para identificar, analisar e classificar desinformação
-                    </div>
+                    <div class="welcome-title" id="cfgWelcomeTitle">Bem-vindo ao Protocolo Científico — SESI</div>
+                    <div class="welcome-subtitle" id="cfgWelcomeSubtitle">Uma ferramenta científica para identificar, analisar e classificar desinformação</div>
 
                     <div class="project-info">
-                        <div class="project-title">📚 Sobre este projeto:</div>
-                        <div class="project-text">
-                            <strong>Protocolo Científico para Fake News - SESI</strong> é resultado do <strong>Projeto Interdisciplinar</strong> da Escola SESI Uberaba.
-                        </div>
-                        <div class="project-text">
-                            <strong>Desenvolvimento:</strong> Profs. Thales Garcia, Lívia Ribeiro e Michael Luciano.
-                        </div>
-                        <div class="project-text">
-                            <strong>Equipe de Apoio:</strong> Julia Belo e Vânia Callegari
-                        </div>
+                        <div class="project-title" id="cfgProjectTitle">📚 Sobre este projeto:</div>
+                        <div class="project-text" id="cfgProjectText1"><strong>Protocolo Científico para Fake News - SESI</strong> é resultado do <strong>Projeto Interdisciplinar</strong> da Escola SESI Uberaba.</div>
+                        <div class="project-text" id="cfgProjectText2"><strong>Desenvolvimento:</strong> Profs. Thales Garcia, Lívia Ribeiro e Michael Luciano.</div>
+                        <div class="project-text" id="cfgProjectText3"><strong>Equipe de Apoio:</strong> Julia Belo e Vânia Callegari</div>
                         <div class="project-text" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(0, 63, 135, 0.2);">
                             Este aplicativo combina metodologia científica com análise crítica de informações para ajudar você a identificar e classificar notícias falsas ou enganosas.
                         </div>
@@ -1649,9 +1643,9 @@
             <!-- Input Screen - Para inserir a notícia -->
             <div class="input-screen" id="inputScreen">
                 <div class="container-box">
-                    <div class="input-title">🔍 Inserir Notícia para Análise</div>
+                    <div class="input-title" id="cfgInsertTitleEl">🔍 Inserir Notícia para Análise</div>
                     <div class="input-description">
-                        Cole aqui a notícia, manchete ou link que você deseja verificar. Você pode inserir um link completo, copiar e colar o texto da notícia, ou utilizar o leitor de QR Code.
+                        <span id="cfgInsertDescEl">Cole aqui a notícia, manchete ou link que você deseja verificar. Você pode inserir um link completo, copiar e colar o texto da notícia, ou utilizar o leitor de QR Code.</span>
                     </div>
 
                     <div class="tabs">
@@ -2158,7 +2152,8 @@
             storageBucket:     "protocolo---fake-news---sesi.firebasestorage.app",
             messagingSenderId: "651352532382",
             appId:             "1:651352532382:web:05b7969b6f92139ce3a28f",
-            measurementId:     "G-QW0PSDSEML"
+            measurementId:     "G-QW0PSDSEML",
+            databaseURL:       "https://protocolo---fake-news---sesi-default-rtdb.firebaseio.com"
         };
 
         var firebaseReady = false;
@@ -2168,6 +2163,9 @@
 
         function isSuperAdmin() {
             return currentUser && currentUser.email === SUPER_ADMIN_EMAIL;
+        }
+        function isModerador() {
+            return currentUser && currentUser.type === 'moderador';
         }
         function isAdmin() {
             return currentUser && (currentUser.type === 'admin' || isSuperAdmin());
@@ -2263,14 +2261,125 @@
             }
         }
 
+        function registrarPresenca() {
+            if (!firebaseReady || !currentUser) return;
+            try {
+                var rtdb = firebase.database();
+                var presRef = rtdb.ref('online/' + currentUser.id);
+                presRef.set({
+                    name: currentUser.name,
+                    email: currentUser.email,
+                    type: currentUser.type || 'user',
+                    since: new Date().toISOString()
+                });
+                // Remove ao desconectar
+                presRef.onDisconnect().remove();
+                // Heartbeat a cada 60s para garantir presença
+                window._presencaInterval = setInterval(function() {
+                    presRef.set({
+                        name: currentUser.name,
+                        email: currentUser.email,
+                        type: currentUser.type || 'user',
+                        since: new Date().toISOString()
+                    });
+                }, 60000);
+            } catch(e) { console.warn('Presença RTDB:', e); }
+        }
+
+        function removerPresenca() {
+            if (!firebaseReady || !currentUser) return;
+            try {
+                clearInterval(window._presencaInterval);
+                firebase.database().ref('online/' + currentUser.id).remove();
+            } catch(e) {}
+        }
+
+        function fecharModalOnline() {
+            var m = document.getElementById('modalOnline');
+            if (m) m.style.display = 'none';
+        }
+
+        function mostrarMonitorOnline() {
+            if (!isSuperAdmin()) return;
+            var modal = document.getElementById('modalOnline');
+            if (modal) { modal.style.display = 'block'; atualizarMonitorOnline(); return; }
+
+            var m = document.createElement('div');
+            m.id = 'modalOnline';
+            m.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;overflow-y:auto;';
+
+            var html = '<div style="background:white;max-width:600px;margin:40px auto;border-radius:12px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.3);">';
+            html += '<div style="background:linear-gradient(135deg,#1a237e,#0d47a1);padding:20px 25px;display:flex;justify-content:space-between;align-items:center;">';
+            html += '<div><div style="color:white;font-size:1.2em;font-weight:bold;">🟢 Usuários Online</div>';
+            html += '<div style="color:rgba(255,255,255,0.8);font-size:0.85em;">Apenas Super Admin</div></div>';
+            html += '<button onclick="fecharModalOnline()" style="background:none;border:none;color:white;font-size:1.4em;cursor:pointer;opacity:0.8;">✕</button>';
+            html += '</div>';
+            html += '<div style="padding:25px;">';
+            html += '<div id="onlineCount" style="font-size:1.1em;font-weight:bold;color:#1a237e;margin-bottom:15px;"></div>';
+            html += '<div id="onlineList"></div>';
+            html += '<div style="text-align:center;margin-top:20px;">';
+            html += '<button onclick="atualizarMonitorOnline()" style="padding:8px 20px;background:#1a237e;color:white;border:none;border-radius:6px;cursor:pointer;font-size:0.9em;">🔄 Atualizar</button>';
+            html += '</div></div></div>';
+
+            m.innerHTML = html;
+            document.body.appendChild(m);
+            atualizarMonitorOnline();
+        }
+
+
+        function atualizarMonitorOnline() {
+            if (!firebaseReady) return;
+            try {
+                firebase.database().ref('online').get().then(function(snap) {
+                    var users = [];
+                    snap.forEach(function(child) { users.push(child.val()); });
+                    var count = document.getElementById('onlineCount');
+                    var list = document.getElementById('onlineList');
+                    if (!count || !list) return;
+                    count.textContent = '👥 ' + users.length + ' usuário' + (users.length !== 1 ? 's' : '') + ' online agora';
+                    if (users.length === 0) {
+                        list.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">Nenhum usuário online no momento.</div>';
+                        return;
+                    }
+                    var typeColors = { admin: '#e65100', user: '#1565c0' };
+                    var typeLabels = { admin: '🔧 Admin', moderador: '🧪 Moderador', user: '👤 Usuário' };
+                    list.innerHTML = users.map(function(u) {
+                        var since = u.since ? new Date(u.since).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'}) : '--';
+                        var color = typeColors[u.type] || '#555';
+                        var label = typeLabels[u.type] || u.type;
+                        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:8px;background:#f5f5f5;margin-bottom:8px;">'
+                            + '<div><div style="font-weight:bold;color:#222;">' + (u.name || 'Sem nome') + '</div>'
+                            + '<div style="font-size:0.8em;color:#666;">' + (u.email || '') + '</div></div>'
+                            + '<div style="text-align:right;">'
+                            + '<div style="font-size:0.8em;font-weight:bold;color:' + color + ';">' + label + '</div>'
+                            + '<div style="font-size:0.75em;color:#999;">desde ' + since + '</div>'
+                            + '</div></div>';
+                    }).join('');
+                });
+            } catch(e) { console.warn('Monitor online:', e); }
+        }
+
         function entrarNoApp() {
+            // Garantir estado limpo ao entrar
+            clearTimeout(demoTimer);
+            demoStep = 0;
+            demoManual = false;
+            navLivreAtiva = false;
+
             document.getElementById('loginOverlay').classList.add('hidden');
             document.getElementById('loginOverlay').style.display = 'none';
             document.querySelector('.app-container').style.display = 'block';
             document.getElementById('rodapeFixo').style.display = 'none';
+
+            // Garantir que só a welcomeScreen está visível
+            _esconderTodasTelas();
+            var welcome = document.getElementById('welcomeScreen');
+            if (welcome) welcome.classList.remove('hidden');
+
             mostrarUsuarioNoHeader();
             mostrarMsgLogin('Bem-vindo, ' + currentUser.name + '!', 'success');
             carregarConfigFirebase();
+            registrarPresenca();
         }
 
         function verificarForca(senha) {
@@ -2407,7 +2516,7 @@
             document.getElementById('headerUserName').textContent = currentUser.name;
 
             // Reset todos os botões antes de mostrar os corretos
-            ['btnAdminPanel','btnConfigPanel','btnModoDemo','btnNavLivre'].forEach(function(id) {
+            ['btnAdminPanel','btnConfigPanel','btnOnline','btnModoDemo','btnNavLivre'].forEach(function(id) {
                 var el = document.getElementById(id);
                 if (el) el.style.display = 'none';
             });
@@ -2417,11 +2526,30 @@
                 document.getElementById('btnAdminPanel').style.display = 'block';
                 document.getElementById('btnAdminPanel').style.background = '#f57c00';
                 document.getElementById('btnConfigPanel').style.display = 'block';
+                document.getElementById('btnOnline').style.display = 'block';
                 document.getElementById('btnModoDemo').style.display = 'block';
                 document.getElementById('btnNavLivre').style.display = 'block';
             } else if (currentUser.type === 'admin') {
                 document.getElementById('headerUserType').textContent = '🔧 Administrador';
                 document.getElementById('btnAdminPanel').style.display = 'block';
+                document.getElementById('btnConfigPanel').style.display = 'block';
+                document.getElementById('btnConfigPanel').style.background = '#9e9e9e';
+                document.getElementById('btnConfigPanel').style.cursor = 'not-allowed';
+                document.getElementById('btnConfigPanel').title = 'Apenas Super Admin pode editar';
+                document.getElementById('btnModoDemo').style.display = 'block';
+                document.getElementById('btnNavLivre').style.display = 'block';
+            } else if (currentUser.type === 'moderador') {
+                document.getElementById('headerUserType').textContent = '🧪 Moderador';
+                // Config e Admin visíveis mas bloqueados
+                document.getElementById('btnAdminPanel').style.display = 'block';
+                document.getElementById('btnAdminPanel').style.background = '#9e9e9e';
+                document.getElementById('btnAdminPanel').style.cursor = 'not-allowed';
+                document.getElementById('btnAdminPanel').title = 'Apenas Admin pode acessar';
+                document.getElementById('btnConfigPanel').style.display = 'block';
+                document.getElementById('btnConfigPanel').style.background = '#9e9e9e';
+                document.getElementById('btnConfigPanel').style.cursor = 'not-allowed';
+                document.getElementById('btnConfigPanel').title = 'Apenas Super Admin pode editar';
+                // Demo e Navegar liberados
                 document.getElementById('btnModoDemo').style.display = 'block';
                 document.getElementById('btnNavLivre').style.display = 'block';
             } else {
@@ -2430,6 +2558,7 @@
         }
 
         function fazerLogout() {
+            removerPresenca();
             currentUser = null;
             analyses = [];
             document.getElementById('loginOverlay').style.display = 'flex';
@@ -2487,8 +2616,8 @@
             document.getElementById('btnNavLivre').style.background = '#37474f';
             document.getElementById('btnNavLivre').textContent = '🔓 Navegar';
             _esconderTodasTelas();
-            var input = document.getElementById('inputScreen');
-            if (input) input.classList.add('active');
+            var welcome = document.getElementById('welcomeScreen');
+            if (welcome) welcome.classList.remove('hidden');
             currentNews = { title: '', content: '', url: '' };
             scrollToTop();
         }
@@ -2651,6 +2780,14 @@
             emailContato: 'thales.garcia@fiemg.com.br',
             titulo: 'Protocolo Científico para Fake News',
             descricao: 'Cole aqui a notícia, manchete ou link que você deseja verificar. Você pode inserir um link completo, copiar e colar o texto da notícia, ou utilizar o leitor de QR Code.',
+            welcomeTitle: 'Bem-vindo ao Protocolo Científico — SESI',
+            welcomeSubtitle: 'Uma ferramenta científica para identificar, analisar e classificar desinformação',
+            projectTitle: '📚 Sobre este projeto:',
+            projectText1: 'Protocolo Científico para Fake News - SESI é resultado do Projeto Interdisciplinar da Escola SESI Uberaba.',
+            projectText2: 'Desenvolvimento: Profs. Thales Garcia, Lívia Ribeiro e Michael Luciano.',
+            projectText3: 'Equipe de Apoio: Julia Belo e Vânia Callegari',
+            insertTitle: '🔍 Inserir Notícia para Análise',
+            insertDesc: 'Cole aqui a notícia, manchete ou link que você deseja verificar. Você pode inserir um link completo, copiar e colar o texto da notícia, ou utilizar o leitor de QR Code.',
             etapas: [
                 { pergunta: 'A informação possui FONTE IDENTIFICÁVEL?', descricao: 'Verifique se é possível identificar claramente quem publicou ou é responsável pela informação.' },
                 { pergunta: 'O AUTOR é rastreável e verificável?', descricao: 'Verifique se o autor possui histórico verificável e credibilidade na área.' },
@@ -2672,6 +2809,14 @@
                     if (d.emailContato) configSistema.emailContato = d.emailContato;
                     if (d.titulo) configSistema.titulo = d.titulo;
                     if (d.descricao) configSistema.descricao = d.descricao;
+                    if (d.welcomeTitle) configSistema.welcomeTitle = d.welcomeTitle;
+                    if (d.welcomeSubtitle) configSistema.welcomeSubtitle = d.welcomeSubtitle;
+                    if (d.projectTitle) configSistema.projectTitle = d.projectTitle;
+                    if (d.projectText1) configSistema.projectText1 = d.projectText1;
+                    if (d.projectText2) configSistema.projectText2 = d.projectText2;
+                    if (d.projectText3) configSistema.projectText3 = d.projectText3;
+                    if (d.insertTitle) configSistema.insertTitle = d.insertTitle;
+                    if (d.insertDesc) configSistema.insertDesc = d.insertDesc;
                     if (d.etapas) configSistema.etapas = d.etapas;
                     if (d.temas) configSistema.temas = d.temas;
                     aplicarConfiguracoes();
@@ -2680,12 +2825,24 @@
         }
 
         function aplicarConfiguracoes() {
-            // Título do sistema
-            var titleEls = document.querySelectorAll('.input-title');
-            if (titleEls.length > 0) titleEls[0].textContent = '🔍 ' + configSistema.titulo;
-            // Descrição
-            var descEls = document.querySelectorAll('.input-description');
-            if (descEls.length > 0) descEls[0].textContent = configSistema.descricao;
+            // Página inicial
+            var wt = document.getElementById('cfgWelcomeTitle');
+            if (wt && configSistema.welcomeTitle) wt.textContent = configSistema.welcomeTitle;
+            var ws = document.getElementById('cfgWelcomeSubtitle');
+            if (ws && configSistema.welcomeSubtitle) ws.textContent = configSistema.welcomeSubtitle;
+            var pt = document.getElementById('cfgProjectTitle');
+            if (pt && configSistema.projectTitle) pt.textContent = configSistema.projectTitle;
+            var p1 = document.getElementById('cfgProjectText1');
+            if (p1 && configSistema.projectText1) p1.textContent = configSistema.projectText1;
+            var p2 = document.getElementById('cfgProjectText2');
+            if (p2 && configSistema.projectText2) p2.textContent = configSistema.projectText2;
+            var p3 = document.getElementById('cfgProjectText3');
+            if (p3 && configSistema.projectText3) p3.textContent = configSistema.projectText3;
+            // Tela inserir
+            var it = document.getElementById('cfgInsertTitleEl');
+            if (it && configSistema.insertTitle) it.textContent = configSistema.insertTitle;
+            var id = document.getElementById('cfgInsertDescEl');
+            if (id && configSistema.insertDesc) id.textContent = configSistema.insertDesc;
             // Etapas
             configSistema.etapas.forEach(function(etapa, i) {
                 var stepEl = document.getElementById('step' + (i+1));
@@ -2699,11 +2856,16 @@
 
         function mostrarPainelConfig() {
             if (!isSuperAdmin()) { alert('Apenas o Super Admin pode acessar as configurações.'); return; }
+            if (isModerador()) return;
             // Preencher campos
-            document.getElementById('cfgNomeInst').value = configSistema.nomeInst;
-            document.getElementById('cfgEmail').value = configSistema.emailContato;
-            document.getElementById('cfgTitulo').value = configSistema.titulo;
-            document.getElementById('cfgDescricao').value = configSistema.descricao;
+            document.getElementById('cfgWelcomeTitleInput').value = configSistema.welcomeTitle || '';
+            document.getElementById('cfgWelcomeSubtitleInput').value = configSistema.welcomeSubtitle || '';
+            document.getElementById('cfgProjectTitleInput').value = configSistema.projectTitle || '';
+            document.getElementById('cfgProjectText1Input').value = configSistema.projectText1 || '';
+            document.getElementById('cfgProjectText2Input').value = configSistema.projectText2 || '';
+            document.getElementById('cfgProjectText3Input').value = configSistema.projectText3 || '';
+            document.getElementById('cfgInsertTitle').value = configSistema.insertTitle || '';
+            document.getElementById('cfgInsertDesc').value = configSistema.insertDesc || '';
 
             // Etapas
             var etapasHtml = '';
@@ -2745,10 +2907,14 @@
         }
 
         function salvarConfiguracoes() {
-            configSistema.nomeInst = document.getElementById('cfgNomeInst').value.trim();
-            configSistema.emailContato = document.getElementById('cfgEmail').value.trim();
-            configSistema.titulo = document.getElementById('cfgTitulo').value.trim();
-            configSistema.descricao = document.getElementById('cfgDescricao').value.trim();
+            configSistema.welcomeTitle   = document.getElementById('cfgWelcomeTitleInput').value.trim();
+            configSistema.welcomeSubtitle = document.getElementById('cfgWelcomeSubtitleInput').value.trim();
+            configSistema.projectTitle   = document.getElementById('cfgProjectTitleInput').value.trim();
+            configSistema.projectText1   = document.getElementById('cfgProjectText1Input').value.trim();
+            configSistema.projectText2   = document.getElementById('cfgProjectText2Input').value.trim();
+            configSistema.projectText3   = document.getElementById('cfgProjectText3Input').value.trim();
+            configSistema.insertTitle    = document.getElementById('cfgInsertTitle').value.trim();
+            configSistema.insertDesc     = document.getElementById('cfgInsertDesc').value.trim();
             configSistema.etapas.forEach(function(e, i) {
                 var q = document.getElementById('cfgEtapa' + i + '_q');
                 var d = document.getElementById('cfgEtapa' + i + '_d');
@@ -2831,7 +2997,8 @@
         }
 
         function mostrarPainelAdmin() {
-            if (currentUser && currentUser.type === 'admin') {
+            if (isModerador()) { alert('Apenas Admin ou Super Admin podem acessar o painel.'); return; }
+            if (currentUser && (currentUser.type === 'admin' || isSuperAdmin())) {
                 document.getElementById('adminModal').style.display = 'block';
                 carregarDadosAdmin();
             }
@@ -3329,7 +3496,7 @@
 
             users.forEach(function(u, i) {
                 var sexLabel = u.sex === 'M' ? 'Masculino' : u.sex === 'F' ? 'Feminino' : (u.sex || '-');
-                var tipo = u.email === SUPER_ADMIN_EMAIL ? 'Super Admin' : (u.type === 'admin' ? 'Administrador' : 'Usuário');
+                var tipo = u.email === SUPER_ADMIN_EMAIL ? 'Super Admin' : (u.type === 'admin' ? 'Administrador' : u.type === 'moderador' ? 'Moderador' : 'Usuário');
                 var style = getDataStyle(i % 2 === 1);
                 var row = [u.name, u.email, u.birthDate || '-', sexLabel, tipo, u.createdAt ? new Date(u.createdAt).toLocaleDateString('pt-BR') : '-'];
                 row.forEach(function(val, c) {
@@ -5001,35 +5168,56 @@ showResultDirect(resultType, resultTitle, resultMessage, iciScore, cidNumber, ci
             </div>
             <div style="padding:25px;">
 
-                <!-- Instituição -->
+
+
+                                <!-- Página Inicial -->
                 <div style="margin-bottom:20px;">
-                    <div style="font-weight:bold; color:#4a148c; font-size:1em; margin-bottom:10px; border-bottom:2px solid #e1bee7; padding-bottom:6px;">🏫 Instituição</div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                        <div>
-                            <label style="font-size:0.85em; color:#555; display:block; margin-bottom:4px;">Nome da Instituição</label>
-                            <input id="cfgNomeInst" type="text" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9em; box-sizing:border-box;">
-                        </div>
-                        <div>
-                            <label style="font-size:0.85em; color:#555; display:block; margin-bottom:4px;">E-mail de Contato</label>
-                            <input id="cfgEmail" type="email" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9em; box-sizing:border-box;">
-                        </div>
+                    <div style="font-weight:bold; color:#4a148c; font-size:1em; margin-bottom:10px; border-bottom:2px solid #e1bee7; padding-bottom:6px;">🏠 Página Inicial</div>
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.85em; color:#555; display:block; margin-bottom:4px;">Título de Boas-Vindas</label>
+                        <input id="cfgWelcomeTitleInput" type="text" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9em; box-sizing:border-box;">
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.85em; color:#555; display:block; margin-bottom:4px;">Subtítulo</label>
+                        <input id="cfgWelcomeSubtitleInput" type="text" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9em; box-sizing:border-box;">
                     </div>
                 </div>
 
-                <!-- Tela inicial -->
+                <!-- Sobre o Projeto -->
                 <div style="margin-bottom:20px;">
-                    <div style="font-weight:bold; color:#4a148c; font-size:1em; margin-bottom:10px; border-bottom:2px solid #e1bee7; padding-bottom:6px;">🏠 Tela Inicial</div>
+                    <div style="font-weight:bold; color:#4a148c; font-size:1em; margin-bottom:10px; border-bottom:2px solid #e1bee7; padding-bottom:6px;">📚 Sobre o Projeto</div>
                     <div style="margin-bottom:10px;">
-                        <label style="font-size:0.85em; color:#555; display:block; margin-bottom:4px;">Título do Sistema</label>
-                        <input id="cfgTitulo" type="text" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9em; box-sizing:border-box;">
+                        <label style="font-size:0.85em; color:#555; display:block; margin-bottom:4px;">Título da seção</label>
+                        <input id="cfgProjectTitleInput" type="text" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9em; box-sizing:border-box;">
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.85em; color:#555; display:block; margin-bottom:4px;">Linha 1 (ex: nome do projeto e escola)</label>
+                        <textarea id="cfgProjectText1Input" rows="2" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9em; box-sizing:border-box; resize:vertical;"></textarea>
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.85em; color:#555; display:block; margin-bottom:4px;">Linha 2 (ex: equipe de desenvolvimento)</label>
+                        <textarea id="cfgProjectText2Input" rows="2" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9em; box-sizing:border-box; resize:vertical;"></textarea>
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.85em; color:#555; display:block; margin-bottom:4px;">Linha 3 (ex: equipe de apoio)</label>
+                        <textarea id="cfgProjectText3Input" rows="2" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9em; box-sizing:border-box; resize:vertical;"></textarea>
+                    </div>
+                </div>
+
+                <!-- Tela Inserir -->
+                <div style="margin-bottom:20px;">
+                    <div style="font-weight:bold; color:#4a148c; font-size:1em; margin-bottom:10px; border-bottom:2px solid #e1bee7; padding-bottom:6px;">📝 Tela Inserir Notícia</div>
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.85em; color:#555; display:block; margin-bottom:4px;">Título</label>
+                        <input id="cfgInsertTitle" type="text" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9em; box-sizing:border-box;">
                     </div>
                     <div>
-                        <label style="font-size:0.85em; color:#555; display:block; margin-bottom:4px;">Descrição/Subtítulo</label>
-                        <textarea id="cfgDescricao" rows="2" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9em; box-sizing:border-box; resize:vertical;"></textarea>
+                        <label style="font-size:0.85em; color:#555; display:block; margin-bottom:4px;">Descrição</label>
+                        <textarea id="cfgInsertDesc" rows="2" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:6px; font-size:0.9em; box-sizing:border-box; resize:vertical;"></textarea>
                     </div>
                 </div>
 
-                <!-- Etapas -->
+<!-- Etapas -->
                 <div style="margin-bottom:20px;">
                     <div style="font-weight:bold; color:#4a148c; font-size:1em; margin-bottom:10px; border-bottom:2px solid #e1bee7; padding-bottom:6px;">📋 Perguntas das Etapas</div>
                     <div id="cfgEtapas"></div>
