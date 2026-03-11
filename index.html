@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <meta name="google-site-verification" content="3Ij019-hukiU4Y-exG2tI0xPH10upkH3oJprk2c7rns" />
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://sesi-fakenews.pages.dev">
     <meta property="og:title" content="Protocolo Científico para Fake News - SESI">
@@ -1429,7 +1430,7 @@
                 </div>
                 <div class="login-form-group">
                     <label>Senha</label>
-                    <input type="password" id="loginPassword" placeholder="••••••••" required>
+                    <div style="position:relative;"><input type="password" id="loginPassword" placeholder="••••••••" required><button type="button" onclick="toggleSenha('loginPassword')" id="eyeBtn_loginPassword" style="position:absolute;right:0;top:0;height:100%;width:40px;background:none;border:none;cursor:pointer;padding:0;color:#90a4ae;display:flex;align-items:center;justify-content:center;border-radius:0 6px 6px 0;transition:color 0.2s;border-left:1px solid #e0e0e0;" onmouseover="this.style.color='#1565c0'" onmouseout="this.style.color='#90a4ae'" title="Mostrar/ocultar senha"><svg id="eyeIcon_loginPassword" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px; margin:15px 0 5px;">
                     <input type="checkbox" id="rememberMe" style="width:16px; height:16px; cursor:pointer;">
@@ -1474,7 +1475,7 @@
                 </div>
                 <div class="login-form-group">
                     <label>Senha <span style="color:#888; font-weight:400; font-size:0.82em;">(mín. 8 caracteres)</span></label>
-                    <input type="password" id="regPassword" placeholder="••••••••" oninput="verificarForca(this.value)" required>
+                    <div style="position:relative;"><input type="password" id="regPassword" placeholder="••••••••" oninput="verificarForca(this.value)" required><button type="button" onclick="toggleSenha('regPassword')" id="eyeBtn_regPassword" style="position:absolute;right:0;top:0;height:100%;width:40px;background:none;border:none;cursor:pointer;padding:0;color:#90a4ae;display:flex;align-items:center;justify-content:center;border-radius:0 6px 6px 0;transition:color 0.2s;border-left:1px solid #e0e0e0;" onmouseover="this.style.color='#1565c0'" onmouseout="this.style.color='#90a4ae'" title="Mostrar/ocultar senha"><svg id="eyeIcon_regPassword" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div>
                     <div id="passwordStrengthBar" style="height:6px; border-radius:3px; margin-top:6px; background:#ddd; overflow:hidden;">
                         <div id="passwordStrengthFill" style="height:100%; width:0%; border-radius:3px; transition:width 0.3s, background 0.3s;"></div>
                     </div>
@@ -1488,7 +1489,7 @@
                 </div>
                 <div class="login-form-group">
                     <label>Confirmar Senha</label>
-                    <input type="password" id="regPasswordConfirm" placeholder="••••••••" required>
+                    <div style="position:relative;"><input type="password" id="regPasswordConfirm" placeholder="••••••••" required><button type="button" onclick="toggleSenha('regPasswordConfirm')" id="eyeBtn_regPasswordConfirm" style="position:absolute;right:0;top:0;height:100%;width:40px;background:none;border:none;cursor:pointer;padding:0;color:#90a4ae;display:flex;align-items:center;justify-content:center;border-radius:0 6px 6px 0;transition:color 0.2s;border-left:1px solid #e0e0e0;" onmouseover="this.style.color='#1565c0'" onmouseout="this.style.color='#90a4ae'" title="Mostrar/ocultar senha"><svg id="eyeIcon_regPasswordConfirm" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div>
                 </div>
                 <div class="login-form-group">
                     <label>Data de Nascimento</label>
@@ -2184,7 +2185,8 @@
 
         // ========== DADOS EM MEMÓRIA (fallback local) ==========
         var users = [
-            { id: 1, name: 'Administrador', email: 'admin@sesi.com.br', password: 'admin123', type: 'admin' }
+            { id: 1, name: 'Administrador', email: 'admin@sesi.com.br', password: 'admin123', type: 'admin' },
+            { id: 2, name: 'Moderador SESI', email: 'moderador@sesi.com.br', password: 'moderadorsesi2026', type: 'moderador' }
         ];
         var analyses = [];
         var currentUser = null;
@@ -2210,7 +2212,7 @@
                     })
                     .then(function(u) {
                         if (!u) return null;
-                        var isentos = ['admin@sesi.com.br', SUPER_ADMIN_EMAIL];
+                        var isentos = ['admin@sesi.com.br', 'moderador@sesi.com.br', SUPER_ADMIN_EMAIL];
                         if (!u.emailVerified && isentos.indexOf(u.email) === -1) {
                             firebase.auth().signOut();
                             mostrarMsgLogin('⚠️ E-mail não verificado. Verifique sua caixa de entrada (e a pasta Spam) e clique no link enviado.', 'error');
@@ -2380,6 +2382,22 @@
             mostrarMsgLogin('Bem-vindo, ' + currentUser.name + '!', 'success');
             carregarConfigFirebase();
             registrarPresenca();
+        }
+
+        function toggleSenha(fieldId) {
+            var input = document.getElementById(fieldId);
+            if (!input) return;
+            var isVisible = input.type === 'text';
+            input.type = isVisible ? 'password' : 'text';
+            var icon = document.getElementById('eyeIcon_' + fieldId);
+            if (!icon) return;
+            if (isVisible) {
+                // Show eye (password hidden)
+                icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+            } else {
+                // Show eye-off (password visible)
+                icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+            }
         }
 
         function verificarForca(senha) {
@@ -2703,13 +2721,21 @@
                 + '<button onclick="toggleDemoManual()" id="btnDemoManual" style="padding:3px 10px; background:#1565c0; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; margin-left:6px;">⏸ Pausar</button>'
                 + '<button onclick="executarDemoStep()" id="btnDemoAvancar" style="display:none; padding:3px 10px; background:#2e7d32; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; margin-left:6px;">▶ Avançar</button>'
                 + '<span id="dicaTeclado" style="display:none; font-size:0.8em; color:#888; margin-left:8px;">← → para navegar</span>'
+                + '<button onclick="sairModoDemo()" style="padding:3px 10px; background:#b71c1c; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.85em; margin-left:12px;">✕ Sair do Demo</button>'
                 + '</div>'
                 + '<div class="news-title">📰 ' + demoNews.title + '</div>'
                 + '<div class="news-content"><p>' + demoNews.content + '</p></div>';
 
             scrollToTop();
-            demoManual = false;
-            demoTimer = setTimeout(executarDemoStep, 2500);
+            demoManual = true;
+            var btnPausar = document.getElementById('btnDemoManual');
+            var btnAvancar = document.getElementById('btnDemoAvancar');
+            var texto = document.getElementById('demoModoTexto');
+            var dicaTeclado = document.getElementById('dicaTeclado');
+            if (btnPausar) btnPausar.textContent = '▶ Auto';
+            if (btnAvancar) btnAvancar.style.display = 'inline-block';
+            if (texto) texto.textContent = 'modo manual';
+            if (dicaTeclado) dicaTeclado.style.display = 'inline';
         }
 
         var demoManual = false;
@@ -2738,6 +2764,17 @@
                 answers['step' + i] = demoAnswers[i] ? [2,1,2,1,1,1,2][i-1] : 0;
             }
             goToStep(stepAnterior);
+        }
+
+        function sairModoDemo() {
+            clearTimeout(demoTimer);
+            demoStep = 0;
+            demoManual = false;
+            resetAnswers();
+            _esconderTodasTelas();
+            var welcome = document.getElementById('welcomeScreen');
+            if (welcome) welcome.classList.remove('hidden');
+            scrollToTop();
         }
 
         function toggleDemoManual() {
@@ -3614,7 +3651,7 @@
                     // Ignorado durante registro — tratado por fazerRegistro()
                     if (ignorarAuthChange) return;
                     if (!user) return;
-                    var isentos = ['admin@sesi.com.br', 'thalesgarciacunha@gmail.com'];
+                    var isentos = ['admin@sesi.com.br', 'moderador@sesi.com.br', 'thalesgarciacunha@gmail.com'];
                     // Força reload para obter emailVerified atualizado do servidor
                     user.reload().then(function() {
                         var u = firebase.auth().currentUser;
@@ -5109,15 +5146,15 @@ showResultDirect(resultType, resultTitle, resultMessage, iciScore, cidNumber, ci
             </div>
             <div style="margin-bottom:15px;">
                 <label style="display:block; font-weight:600; margin-bottom:6px; color:#333;">Senha Atual</label>
-                <input type="password" id="senhaAtual" placeholder="••••••••" style="width:100%; padding:11px; border:2px solid #ddd; border-radius:8px; font-size:1em;">
+                <div style="position:relative;"><input type="password" id="senhaAtual" placeholder="••••••••" style="padding-right:38px; width:100%; padding:11px; border:2px solid #ddd; border-radius:8px; font-size:1em;"><button type="button" onclick="toggleSenha('senhaAtual')" id="eyeBtn_senhaAtual" style="position:absolute;right:0;top:0;height:100%;width:40px;background:none;border:none;cursor:pointer;padding:0;color:#90a4ae;display:flex;align-items:center;justify-content:center;border-radius:0 6px 6px 0;transition:color 0.2s;border-left:1px solid #e0e0e0;" onmouseover="this.style.color='#1565c0'" onmouseout="this.style.color='#90a4ae'" title="Mostrar/ocultar senha"><svg id="eyeIcon_senhaAtual" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div>
             </div>
             <div style="margin-bottom:15px;">
                 <label style="display:block; font-weight:600; margin-bottom:6px; color:#333;">Nova Senha</label>
-                <input type="password" id="senhaNova" placeholder="••••••••" style="width:100%; padding:11px; border:2px solid #ddd; border-radius:8px; font-size:1em;">
+                <div style="position:relative;"><input type="password" id="senhaNova" placeholder="••••••••" style="padding-right:38px; width:100%; padding:11px; border:2px solid #ddd; border-radius:8px; font-size:1em;"><button type="button" onclick="toggleSenha('senhaNova')" id="eyeBtn_senhaNova" style="position:absolute;right:0;top:0;height:100%;width:40px;background:none;border:none;cursor:pointer;padding:0;color:#90a4ae;display:flex;align-items:center;justify-content:center;border-radius:0 6px 6px 0;transition:color 0.2s;border-left:1px solid #e0e0e0;" onmouseover="this.style.color='#1565c0'" onmouseout="this.style.color='#90a4ae'" title="Mostrar/ocultar senha"><svg id="eyeIcon_senhaNova" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div>
             </div>
             <div style="margin-bottom:15px;">
                 <label style="display:block; font-weight:600; margin-bottom:6px; color:#333;">Confirmar Nova Senha</label>
-                <input type="password" id="senhaNovaConf" placeholder="••••••••" style="width:100%; padding:11px; border:2px solid #ddd; border-radius:8px; font-size:1em;">
+                <div style="position:relative;"><input type="password" id="senhaNovaConf" placeholder="••••••••" style="padding-right:38px; width:100%; padding:11px; border:2px solid #ddd; border-radius:8px; font-size:1em;"><button type="button" onclick="toggleSenha('senhaNovaConf')" id="eyeBtn_senhaNovaConf" style="position:absolute;right:0;top:0;height:100%;width:40px;background:none;border:none;cursor:pointer;padding:0;color:#90a4ae;display:flex;align-items:center;justify-content:center;border-radius:0 6px 6px 0;transition:color 0.2s;border-left:1px solid #e0e0e0;" onmouseover="this.style.color='#1565c0'" onmouseout="this.style.color='#90a4ae'" title="Mostrar/ocultar senha"><svg id="eyeIcon_senhaNovaConf" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div>
             </div>
             <div id="msgSenha" style="min-height:20px; font-size:0.9em; margin-bottom:10px; font-weight:600;"></div>
             <button onclick="alterarSenha()" style="width:100%; padding:12px; background:#003f87; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:1em;">Salvar Nova Senha</button>
