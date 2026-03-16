@@ -1257,72 +1257,84 @@
             /* Body não escapa da tela */
             body { overflow-x: hidden; }
 
-            /* Header compacto */
-            .header { padding: 8px 12px; }
+            /* ── HEADER: linha única, logo + botões compactos ── */
+            .header { padding: 6px 10px; }
 
             .header-content {
-                flex-wrap: wrap;
-                gap: 8px;
+                flex-wrap: nowrap;
+                gap: 6px;
                 align-items: center;
             }
 
+            /* Logo-section ocupa o espaço livre, não empurra botões */
             .logo-section {
-                flex: 1;
+                flex: 1 1 auto;
                 min-width: 0;
-                gap: 8px;
+                gap: 6px;
                 align-items: center;
+                flex-direction: row;
             }
 
             .logo-section img {
-                height: 28px;
+                height: 26px;
                 width: auto;
+                flex-shrink: 0;
             }
 
             .main-title {
-                font-size: 0.85em;
+                font-size: 0.78em;
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
 
-            /* Esconder subtítulo do header */
-            .subtitle { display: none; }
+            /* Esconder subtítulo */
+            .subtitle { display: none !important; }
 
-            /* Botões do header — todos compactos */
+            /* Controles: não expandem, ficam juntos à direita */
             .header-controls {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 4px;
-                align-items: center;
+                flex-shrink: 0;
             }
 
-            .header-content button {
-                height: 30px;
-                padding: 0 8px;
-                font-size: 0.75em;
-                min-width: unset;
-                width: auto;
+            /* UserPanel: linha única sem quebrar */
+            #userPanel {
+                gap: 6px !important;
+                flex-wrap: nowrap !important;
+                margin-right: 0 !important;
             }
 
-            /* Esconder texto, manter só emoji nos 3 botões menores */
-            button[onclick="abrirModalSenha()"],
+            /* Info do usuário: esconder no mobile */
+            #userPanel > div:first-child {
+                display: none;
+            }
+
+            /* Todos botões do header: compactos */
+            #userPanel button {
+                height: 28px !important;
+                padding: 0 7px !important;
+                font-size: 0.72em !important;
+                min-width: unset !important;
+                width: auto !important;
+                white-space: nowrap;
+            }
+
+            /* Sair e Tema: só emoji */
             #btnLogout,
             button[onclick="toggleTheme()"] {
-                font-size: 0;
-                width: 34px;
-                padding: 0;
+                font-size: 0 !important;
+                width: 30px !important;
+                padding: 0 !important;
             }
-            button[onclick="abrirModalSenha()"]::before { content: '🔑'; font-size: 16px; }
-            #btnLogout::before                           { content: '🚪'; font-size: 16px; }
-            button[onclick="toggleTheme()"]::before     { content: '🌙'; font-size: 16px; }
+            #btnLogout::before           { content: '🚪'; font-size: 15px; }
+            button[onclick="toggleTheme()"]::before { content: '🌙'; font-size: 15px; }
 
-            /* Conteúdo principal */
+            /* ── CONTEÚDO PRINCIPAL ── */
             .main            { padding: 10px; }
             .container-box   { padding: 16px; }
 
-            /* Botões internos */
-            button           { min-width: unset; }
-            .button-group    { flex-direction: column; }
+            /* Botões de ação (dentro do conteúdo, não no header) */
+            .button-group button { min-width: unset; }
+            .button-group        { flex-direction: column; }
 
             /* Step header */
             .step-header     { gap: 10px; }
@@ -1335,7 +1347,7 @@
             /* Tabs */
             .tabs            { flex-wrap: wrap; }
 
-            /* Tabelas admin com scroll horizontal (SEM min-width forçado) */
+            /* Tabelas admin com scroll horizontal */
             #usersAdminTable,
             #analysesAdminTable,
             #evaluationsAdminTable {
@@ -1346,11 +1358,38 @@
             /* Login box */
             .login-box       { padding: 20px 16px; }
 
-            /* Botões exportar empilhados */
+            /* Botões exportar admin: empilhar */
             div[style*="display:flex; gap:10px"] {
                 flex-direction: column;
             }
         }
+        /* ── Tabelas responsivas (tela de resultado) ── */
+        .recommendation table,
+        .ici-score table,
+        .result-box table {
+            width: 100%;
+            table-layout: fixed;
+            word-break: break-word;
+        }
+
+        @media (max-width: 768px) {
+            .result-box { padding: 20px 14px; }
+            .result-title { font-size: 1.4em; }
+            .result-message { font-size: 1em; }
+            .ici-number { font-size: 2.8em; }
+            .ici-score { padding: 18px 12px; }
+            .cid-classification { padding: 16px 12px; }
+            .recommendation { padding: 14px 12px; }
+
+            .recommendation table td,
+            .recommendation table th,
+            .result-box table td,
+            .result-box table th {
+                padding: 7px 6px;
+                font-size: 0.88em;
+            }
+        }
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
@@ -1486,12 +1525,12 @@
                     </div>
                 </div>
                 <div class="header-controls">
-                    <div id="userPanel" style="display: none; display: flex; align-items: center; gap: 15px; margin-right: 20px;">
+                    <div id="userPanel" style="display: none; align-items: center; gap: 8px; flex-wrap: wrap;">
                         <div style="color: white; text-align: right; font-size: 0.9em;">
                             <div style="font-weight: bold;" id="headerUserName"></div>
                             <div style="opacity: 0.8; font-size: 0.85em;" id="headerUserType"></div>
                         </div>
-                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap;">
+                        <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
                             <button id="btnOnline" onclick="mostrarMonitorOnline()" style="display:none; height:36px; padding:0 14px; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.82em; white-space:nowrap; background:#1a237e;" onmouseover="this.style.background='#0d47a1'" onmouseout="this.style.background='#1a237e'">🟢 Online</button>
                             <button id="btnConfigPanel" onclick="mostrarPainelConfig()" style="display:none; height:36px; padding:0 14px; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.82em; white-space:nowrap; background:#6a1b9a;" onmouseover="this.style.background='#4a148c'" onmouseout="this.style.background='#6a1b9a'">⚙️ Config</button>
                             <button id="btnModoDemo" onclick="iniciarModoDemo()" style="display:none; height:36px; padding:0 14px; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.82em; white-space:nowrap; background:#00796b;" onmouseover="this.style.background='#004d40'" onmouseout="this.style.background='#00796b'">🎭 Demo</button>
