@@ -51,6 +51,11 @@
             box-sizing: border-box;
         }
 
+        html, body {
+            overflow-x: hidden;
+            max-width: 100vw;
+        }
+
         :root {
             --primary: #003f87;
             --primary-light: #0056b3;
@@ -1232,175 +1237,118 @@
             text-decoration: underline;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                align-items: flex-start;
-            }
+        /* ═══════════════════════════════════════
+           MOBILE RESPONSIVO — bloco único unificado
+           ═══════════════════════════════════════ */
 
-            .logo-section {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .main {
-                padding: 15px;
-            }
-
-            .container-box {
-                padding: 20px;
-            }
-
-            button {
-                min-width: 100%;
-            }
-
-            .button-group {
-                flex-direction: column;
-            }
-
-            .step-header {
-                gap: 15px;
-            }
-
-            .step-number {
-                width: 60px;
-                height: 60px;
-                font-size: 1.8em;
-            }
-
-            .welcome-title {
-                font-size: 1.8em;
-            }
-
-            .question {
-                font-size: 1.3em;
-            }
-
-            .tabs {
-                flex-wrap: wrap;
-            }
-        }
-
+        /* ── 480px: tipografia menor ── */
         @media (max-width: 480px) {
-            .header-title {
-                font-size: 1.2em;
-            }
-
-            .main-title {
-                font-size: 1.1em;
-            }
-
-            .welcome-title {
-                font-size: 1.5em;
-            }
-
-            .input-label {
-                font-size: 1em;
-            }
-
+            .main-title      { font-size: 1.1em; }
+            .welcome-title   { font-size: 1.5em; }
+            .input-label     { font-size: 1em; }
             input[type="text"],
             input[type="url"],
-            textarea {
-                padding: 12px;
-                font-size: 4vw;
-            }
+            textarea { padding: 12px; font-size: 4vw; }
         }
-    
-        /* ===== MOBILE RESPONSIVO ===== */
+
+        /* ── 768px: layout mobile ── */
         @media (max-width: 768px) {
 
-            /* Header bem compacto */
-            .header { padding: 8px 12px !important; }
+            /* Body não escapa da tela */
+            body { overflow-x: hidden; }
+
+            /* Header compacto */
+            .header { padding: 8px 12px; }
 
             .header-content {
-                flex-wrap: nowrap !important;
-                gap: 6px !important;
-                align-items: center !important;
+                flex-wrap: wrap;
+                gap: 8px;
+                align-items: center;
             }
 
             .logo-section {
-                flex: 1 !important;
-                gap: 6px !important;
-                min-width: 0 !important;
+                flex: 1;
+                min-width: 0;
+                gap: 8px;
+                align-items: center;
             }
 
-            /* Logo pequena */
             .logo-section img {
-                height: 26px !important;
-                width: auto !important;
-                margin-right: 6px !important;
+                height: 28px;
+                width: auto;
             }
 
-            /* Título menor */
             .main-title {
-                font-size: 0.78em !important;
-                white-space: nowrap !important;
-                overflow: hidden !important;
-                text-overflow: ellipsis !important;
+                font-size: 0.85em;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
 
-            /* Esconder subtítulo */
-            .sub-title { display: none !important; }
+            /* Esconder subtítulo do header */
+            .subtitle { display: none; }
 
-            /* Info usuário compacta */
-            .user-name { font-size: 0.75em !important; }
-            .user-type { font-size: 0.68em !important; }
-
-            /* Todos os botões do header compactos */
-            .header-content button,
-            #btnAdminPanel,
-            #btnLogout {
-                height: 28px !important;
-                padding: 0 8px !important;
-                font-size: 0.72em !important;
-                white-space: nowrap !important;
-                min-width: unset !important;
-                width: auto !important;
+            /* Botões do header — todos compactos */
+            .header-controls {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4px;
+                align-items: center;
             }
 
-            /* Esconder "Alterar Senha" — manter só ícone */
-            button[onclick="abrirModalSenha()"] {
-                font-size: 0 !important;
-                width: 32px !important;
-                padding: 0 !important;
-            }
-            button[onclick="abrirModalSenha()"]::before {
-                content: '🔑';
-                font-size: 16px;
+            .header-content button {
+                height: 30px;
+                padding: 0 8px;
+                font-size: 0.75em;
+                min-width: unset;
+                width: auto;
             }
 
-            /* Esconder texto Sair e Tema */
-            #btnLogout { font-size: 0 !important; width: 32px !important; }
-            #btnLogout::before { content: '🚪'; font-size: 16px; }
+            /* Esconder texto, manter só emoji nos 3 botões menores */
+            button[onclick="abrirModalSenha()"],
+            #btnLogout,
+            button[onclick="toggleTheme()"] {
+                font-size: 0;
+                width: 34px;
+                padding: 0;
+            }
+            button[onclick="abrirModalSenha()"]::before { content: '🔑'; font-size: 16px; }
+            #btnLogout::before                           { content: '🚪'; font-size: 16px; }
+            button[onclick="toggleTheme()"]::before     { content: '🌙'; font-size: 16px; }
 
-            button[onclick="toggleTheme()"] { font-size: 0 !important; width: 32px !important; }
-            button[onclick="toggleTheme()"]::before { content: '🌙'; font-size: 16px; }
+            /* Conteúdo principal */
+            .main            { padding: 10px; }
+            .container-box   { padding: 16px; }
 
-            /* Main */
-            .main { padding: 10px !important; }
+            /* Botões internos */
+            button           { min-width: unset; }
+            .button-group    { flex-direction: column; }
 
-            /* Tabelas com scroll */
+            /* Step header */
+            .step-header     { gap: 10px; }
+            .step-number     { width: 50px; height: 50px; font-size: 1.6em; }
+
+            /* Textos */
+            .welcome-title   { font-size: 1.8em; }
+            .question        { font-size: 1.3em; }
+
+            /* Tabs */
+            .tabs            { flex-wrap: wrap; }
+
+            /* Tabelas admin com scroll horizontal (SEM min-width forçado) */
             #usersAdminTable,
             #analysesAdminTable,
             #evaluationsAdminTable {
-                overflow-x: auto !important;
-                -webkit-overflow-scrolling: touch !important;
-            }
-
-            #usersAdminTable > div,
-            #analysesAdminTable > div,
-            #evaluationsAdminTable > div {
-                min-width: 600px !important;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
             }
 
             /* Login box */
-            .login-box { padding: 20px 16px !important; }
+            .login-box       { padding: 20px 16px; }
 
             /* Botões exportar empilhados */
             div[style*="display:flex; gap:10px"] {
-                flex-direction: column !important;
+                flex-direction: column;
             }
         }
 </style>
@@ -5171,7 +5119,7 @@ showResultDirect(resultType, resultTitle, resultMessage, iciScore, cidNumber, ci
     </div>
     <!-- Rodapé fixo global -->
     <div id="rodapeFixo" style="position:fixed; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.55); color:rgba(255,255,255,0.88); text-align:center; padding:9px 20px; font-size:0.82em; line-height:1.6; z-index:99998; box-sizing:border-box;">
-        🔬 <strong>Protocolo Científico para Fake News</strong> | Escola SESI Uberaba — Alberto Martins Fontoura Borges | Ferramenta Educacional &nbsp;|&nbsp; 📧 <a href="mailto:thales.garcia@fiemg.com.br" style="color:rgba(255,255,255,0.88); text-decoration:none;">thales.garcia@fiemg.com.br</a>
+        🔬 <strong>Protocolo Científico para Fake News</strong> | Escola SESI Uberaba — Alberto Martins Fontoura Borges | Ferramenta Educacional &nbsp;|&nbsp; 📧 <a href="/cdn-cgi/l/email-protection#e19589808d8492cf868093828880a18788848c86cf828e8ccf8393" style="color:rgba(255,255,255,0.88); text-decoration:none;"><span class="__cf_email__" data-cfemail="cabea2aba6afb9e4adabb8a9a3ab8aaca3afa7ade4a9a5a7e4a8b8">[email&#160;protected]</span></a>
     </div>
 
     <!-- ========== MODAL CONFIGURAÇÕES SUPERADMIN ========== -->
@@ -5274,9 +5222,4 @@ showResultDirect(resultType, resultTitle, resultMessage, iciScore, cidNumber, ci
             <button onclick="irParaEtapa(6)" style="padding:6px 12px; background:#455a64; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">E6</button>
             <button onclick="irParaEtapa(7)" style="padding:6px 12px; background:#455a64; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">E7</button>
             <button onclick="irParaResultado()" style="padding:6px 12px; background:#c62828; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">🏁 Resultado</button>
-            <button onclick="desativarNavLivre()" style="padding:6px 12px; background:#b71c1c; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">✕ Sair</button>
-        </div>
-    </div>
-
-</body>
-</html>
+            <button onclick="desativarNavLivre()" style="padding:6px 12px; background
