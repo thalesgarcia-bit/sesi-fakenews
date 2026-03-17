@@ -113,9 +113,8 @@
 
         /* CID classification box */
         .cid-classification table { word-break: break-word; }
-        .cid-classification table td:first-child { width: 60px; white-space: nowrap; }
-        .cid-classification table td:nth-child(2) { width: 30%; }
-        .cid-classification table td:last-child { width: auto; }
+        .cid-classification table td { vertical-align: top; padding: 8px 10px; }
+        .cid-classification table td:first-child { white-space: nowrap; font-weight: bold; }
         .cid-classification table td {
             word-break: break-word;
             vertical-align: top;
@@ -782,6 +781,7 @@
             padding: 25px;
             margin-bottom: 30px;
         }
+        .news-display:empty { display: none; }
 
         .news-title {
             font-size: 1.4em;
@@ -4622,11 +4622,16 @@ showResultDirect(resultType, resultTitle, resultMessage, iciScore, cidNumber, ci
 
                     <div class="recommendation">
                         <strong>📋 CID-D (Classificação Internacional de Desinformação):</strong>
-                        <table style="width: 100%; margin-top: 15px; border-collapse: collapse;">
+                        <table style="width: 100%; margin-top: 15px; border-collapse: collapse; table-layout: fixed;">
+                            <colgroup>
+                                <col style="width: 52px;">
+                                <col style="width: 32%;">
+                                <col>
+                            </colgroup>
                             <tr style="background-color: var(--bg-secondary); border-bottom: 2px solid var(--border);">
-                                <td style="padding: 12px; font-weight: bold;">Código</td>
-                                <td style="padding: 12px; font-weight: bold;">Tipo</td>
-                                <td style="padding: 12px; font-weight: bold;">Descrição</td>
+                                <td style="padding: 8px 10px; font-weight: bold;">Cód</td>
+                                <td style="padding: 8px 10px; font-weight: bold;">Tipo</td>
+                                <td style="padding: 8px 10px; font-weight: bold;">Descrição</td>
                             </tr>
                             <tr style="border-bottom: 1px solid var(--border);">
                                 <td style="padding: 10px; font-weight: bold;">D01</td>
@@ -5252,7 +5257,7 @@ showResultDirect(resultType, resultTitle, resultMessage, iciScore, cidNumber, ci
     </div>
     <!-- Rodapé fixo global -->
     <div id="rodapeFixo" style="position:fixed; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.55); color:rgba(255,255,255,0.88); text-align:center; padding:9px 20px; font-size:0.82em; line-height:1.6; z-index:99998; box-sizing:border-box;">
-        🔬 <strong>Protocolo Científico para Fake News</strong> | Escola SESI Uberaba — Alberto Martins Fontoura Borges | Ferramenta Educacional &nbsp;|&nbsp; 📧 <a href="mailto:thales.garcia@fiemg.com.br" style="color:rgba(255,255,255,0.88); text-decoration:none;">thales.garcia&#64;fiemg.com.br</a>
+        🔬 <strong>Protocolo Científico para Fake News</strong> | Escola SESI Uberaba — Alberto Martins Fontoura Borges | Ferramenta Educacional &nbsp;|&nbsp; 📧 <a href="mailto:thales.garcia@fiemg.com.br" style="color: #ffeb3b; text-decoration: none; font-weight: 500;">thales.garcia&#64;fiemg.com.br</a>
     </div>
 
     <!-- ========== MODAL CONFIGURAÇÕES SUPERADMIN ========== -->
