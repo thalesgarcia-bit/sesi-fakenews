@@ -112,6 +112,10 @@
         }
 
         /* CID classification box */
+        .cid-classification table { word-break: break-word; }
+        .cid-classification table td:first-child { width: 60px; white-space: nowrap; }
+        .cid-classification table td:nth-child(2) { width: 30%; }
+        .cid-classification table td:last-child { width: auto; }
         .cid-classification table td {
             word-break: break-word;
             vertical-align: top;
@@ -347,22 +351,23 @@
         .header-content {
             max-width: 1400px;
             margin: 0 auto;
+            padding: 0 16px;
             height: 56px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
         }
 
-        /* Lado esquerdo: logo */
+        /* Esquerda: logo — não encolhe */
         .logo-section {
             display: flex;
             align-items: center;
             gap: 10px;
-            flex: 1;
+            flex-shrink: 0;
         }
 
         .logo-img {
-            height: 36px;
+            height: 32px;
             width: auto;
             flex-shrink: 0;
             filter: brightness(0) invert(1);
@@ -370,38 +375,36 @@
 
         .logo-sep {
             width: 1px;
-            height: 32px;
+            height: 28px;
             background: rgba(255,255,255,0.35);
             flex-shrink: 0;
         }
 
+        /* Centro: título — cresce e centraliza (igual header-search da Farmácia) */
         .header-title {
-            flex: 0 0 auto;
+            flex: 1;
             text-align: center;
-            white-space: nowrap;
+            margin: 0 auto;
         }
 
         .main-title {
             font-size: 1em;
             font-weight: 700;
-            white-space: nowrap;
             color: white;
+            white-space: nowrap;
         }
 
         .subtitle {
-            font-size: 0.75em;
-            opacity: 0.8;
+            font-size: 0.72em;
+            opacity: 0.75;
             white-space: nowrap;
-            text-align: center;
         }
 
-        /* Lado direito: botão menu hambúrguer */
+        /* Direita: hambúrguer — não encolhe */
         .header-controls {
-            flex: 1;
+            flex-shrink: 0;
             display: flex;
             align-items: center;
-            justify-content: flex-end;
-            gap: 8px;
         }
 
         /* Botão hambúrguer (visível sempre quando logado) */
@@ -424,15 +427,16 @@
         /* Dropdown do menu */
         .header-menu-dropdown {
             display: none;
-            position: absolute;
-            top: 50px;
-            right: 0;
+            position: fixed;
+            top: 56px;
+            right: 8px;
             background: #1e2535;
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.45);
-            z-index: 200;
+            z-index: 9999;
             min-width: 220px;
+            max-width: calc(100vw - 16px);
             overflow: hidden;
         }
         .header-menu-dropdown.open { display: block; }
@@ -1342,44 +1346,24 @@
             .header { padding: 6px 10px; }
 
             .header-content {
-                flex-wrap: nowrap;
-                gap: 6px;
-                align-items: center;
-            }
-
-            .logo-section {
-                display: flex;
-                flex-direction: row;
-                align-items: center;
-                gap: 6px;
-                flex: 1;
+                gap: 8px;
+                padding: 0 10px;
             }
 
             .logo-img,
             .logo-section img {
-                height: 26px !important;
-                width: auto;
-                flex-shrink: 0;
-                margin-right: 0 !important;
+                height: 24px !important;
             }
 
-            .header-title {
-                flex: 0 0 auto;
-                text-align: center;
-                white-space: nowrap;
+            .logo-sep {
+                height: 22px;
             }
 
             .main-title {
-                font-size: 0.75em;
-                white-space: nowrap;
+                font-size: 0.78em;
             }
 
             .subtitle { display: none !important; }
-
-            .header-controls {
-                flex: 1;
-                justify-content: flex-end;
-            }
 
             #userPanel {
                 gap: 4px !important;
@@ -2213,7 +2197,7 @@
             </div>
             <div style="border-top: 1px solid var(--border); padding-top: 12px;">
                 <p style="margin: 0; font-size: 1.05em; color: white;">
-                    📧 Dúvidas, feedbacks ou sugestões de melhoria: <a href="mailto:thales.garcia@fiemg.com.br" style="color: #ffeb3b; text-decoration: none; font-weight: 500;">thales.garcia@fiemg.com.br</a></p>
+                    📧 Dúvidas, feedbacks ou sugestões de melhoria: <a href="mailto:thales.garcia@fiemg.com.br" style="color: #ffeb3b; text-decoration: none; font-weight: 500;">thales.garcia&#64;fiemg.com.br</a></p>
             </div>
         </div>
     </div>
@@ -4562,7 +4546,7 @@ showResultDirect(resultType, resultTitle, resultMessage, iciScore, cidNumber, ci
 
                     <div class="recommendation">
                         <strong>📌 Escala ICI Completa:</strong>
-                        <table style="width: 100%; margin-top: 15px; border-collapse: collapse;">
+                        <table style="width: 100%; margin-top: 15px; border-collapse: collapse; word-break: break-word;">
                             <tr style="border-bottom: 1px solid var(--border);">
                                 <td style="padding: 10px; font-weight: bold;">Pontuação</td>
                                 <td style="padding: 10px; font-weight: bold;">Classificação</td>
@@ -5268,7 +5252,7 @@ showResultDirect(resultType, resultTitle, resultMessage, iciScore, cidNumber, ci
     </div>
     <!-- Rodapé fixo global -->
     <div id="rodapeFixo" style="position:fixed; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.55); color:rgba(255,255,255,0.88); text-align:center; padding:9px 20px; font-size:0.82em; line-height:1.6; z-index:99998; box-sizing:border-box;">
-        🔬 <strong>Protocolo Científico para Fake News</strong> | Escola SESI Uberaba — Alberto Martins Fontoura Borges | Ferramenta Educacional &nbsp;|&nbsp; 📧 <a href="mailto:thales.garcia@fiemg.com.br" style="color: #ffeb3b; text-decoration: none; font-weight: 500;">thales.garcia@fiemg.com.br</a>
+        🔬 <strong>Protocolo Científico para Fake News</strong> | Escola SESI Uberaba — Alberto Martins Fontoura Borges | Ferramenta Educacional &nbsp;|&nbsp; 📧 <a href="mailto:thales.garcia@fiemg.com.br" style="color:rgba(255,255,255,0.88); text-decoration:none;">thales.garcia&#64;fiemg.com.br</a>
     </div>
 
     <!-- ========== MODAL CONFIGURAÇÕES SUPERADMIN ========== -->
