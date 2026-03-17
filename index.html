@@ -347,16 +347,15 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            position: relative;
         }
 
-        /* Lado esquerdo: logo + título */
+        /* Lado esquerdo: logo */
         .logo-section {
             display: flex;
             align-items: center;
             gap: 10px;
-            flex: 1 1 0;
-            min-width: 0;
-            overflow: hidden;
+            flex: 0 0 auto;
         }
 
         .logo-img {
@@ -374,33 +373,33 @@
         }
 
         .header-title {
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-            overflow: hidden;
+            position: absolute;
+            left: 0;
+            right: 0;
+            text-align: center;
+            pointer-events: none;
         }
 
         .main-title {
             font-size: 1em;
             font-weight: 700;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            color: white;
         }
 
         .subtitle {
             font-size: 0.75em;
             opacity: 0.8;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            text-align: center;
         }
 
         /* Lado direito: botão menu hambúrguer */
         .header-controls {
-            flex-shrink: 0;
+            margin-left: auto;
             display: flex;
             align-items: center;
+            justify-content: flex-end;
             gap: 8px;
         }
 
@@ -425,51 +424,52 @@
         .header-menu-dropdown {
             display: none;
             position: absolute;
-            top: 58px;
-            right: 12px;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            box-shadow: var(--shadow-lg);
+            top: 50px;
+            right: 0;
+            background: #1e2535;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.45);
             z-index: 200;
-            min-width: 200px;
+            min-width: 220px;
             overflow: hidden;
         }
         .header-menu-dropdown.open { display: block; }
 
         .menu-user-info {
-            padding: 12px 16px;
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border);
+            padding: 14px 16px 12px;
+            background: rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
         }
         .menu-user-name {
             font-weight: 700;
-            font-size: 0.9em;
-            color: var(--text);
+            font-size: 0.92em;
+            color: #fff;
         }
         .menu-user-type {
-            font-size: 0.78em;
-            color: var(--text-secondary);
+            font-size: 0.76em;
+            color: rgba(255,255,255,0.5);
+            margin-top: 3px;
         }
 
         .menu-item {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             width: 100%;
-            padding: 11px 16px;
+            padding: 12px 16px;
             background: none;
             border: none;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
             cursor: pointer;
             font-size: 0.88em;
-            color: var(--text);
+            color: rgba(255,255,255,0.88);
             text-align: left;
             transition: background 0.15s;
         }
         .menu-item:last-child { border-bottom: none; }
-        .menu-item:hover { background: var(--bg-secondary); }
-        .menu-item.danger { color: #c62828; }
+        .menu-item:hover { background: rgba(255,255,255,0.1); }
+        .menu-item.danger { color: #ff6b6b; }
 
         .theme-toggle {
             background: rgba(255, 255, 255, 0.2);
@@ -1623,6 +1623,7 @@
                             <button class="menu-item" id="menuBtnConfig" style="display:none" onclick="fecharMenu(); mostrarPainelConfig()">⚙️ Configurações</button>
                             <button class="menu-item" id="menuBtnDemo" style="display:none" onclick="fecharMenu(); iniciarModoDemo()">🎭 Modo Demo</button>
                             <button class="menu-item" id="menuBtnNavLivre" style="display:none" onclick="fecharMenu(); ativarNavLivre()">🔓 Navegação Livre</button>
+                            <button class="menu-item danger" id="menuBtnSairNavLivre" style="display:none" onclick="fecharMenu(); desativarNavLivre()">🔒 Sair da Nav. Livre</button>
                             <button class="menu-item" id="menuBtnAdmin" style="display:none" onclick="fecharMenu(); mostrarPainelAdmin()">👑 Admin</button>
                             <button class="menu-item" onclick="fecharMenu(); abrirModalSenha()">🔑 Alterar Senha</button>
                             <button class="menu-item" onclick="fecharMenu(); toggleTheme()">🌙 Tema</button>
@@ -2212,12 +2213,12 @@
             </div>
             <div style="border-top: 1px solid var(--border); padding-top: 12px;">
                 <p style="margin: 0; font-size: 1.05em; color: white;">
-                    📧 Dúvidas, feedbacks ou sugestões de melhoria: <a href="/cdn-cgi/l/email-protection#16627e777a736538717764757f7756707f737b713875797b387464" style="color: #ffeb3b; text-decoration: none; font-weight: 500;"><span class="__cf_email__" data-cfemail="e19589808d8492cf868093828880a18788848c86cf828e8ccf8393">[email&#160;protected]</span></a></p>
+                    📧 Dúvidas, feedbacks ou sugestões de melhoria: <a href="mailto:thales.garcia@fiemg.com.br" style="color: #ffeb3b; text-decoration: none; font-weight: 500;">thales.garcia@fiemg.com.br</a></p>
             </div>
         </div>
     </div>
 
-    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+    <script>
         // Esperar o DOM estar completamente carregado
 
         // ========== FIREBASE CONFIG ==========
@@ -2693,27 +2694,26 @@
         function ativarNavLivre() {
             navLivreAtiva = true;
             document.getElementById('barraNavLivre').style.display = 'block';
-            document.getElementById('menuBtnNavLivre').style.background = '#c62828';
-            document.getElementById('menuBtnNavLivre').textContent = '🔒 Nav ON';
+            var btnSair = document.getElementById('menuBtnSairNavLivre');
+            if (btnSair) btnSair.style.display = 'block';
+            var btnAtiva = document.getElementById('menuBtnNavLivre');
+            if (btnAtiva) btnAtiva.style.display = 'none';
             if (!currentNews.title) {
                 currentNews = { title: '[ Navegação Livre ]', content: 'Modo de navegação administrativa.', url: '' };
             }
             _esconderTodasTelas();
-            var diag = document.getElementById('diagnosticScreen');
-            if (diag) diag.classList.add('active');
-            var s1 = document.getElementById('step1');
-            if (s1) s1.classList.add('active');
-            currentStep = 1;
-            var nd = document.getElementById('newsDisplay');
-            if (nd) nd.innerHTML = '<div style="padding:12px; background:#fff8e1; border-radius:8px; border-left:4px solid #f9a825; color:#555; font-size:0.9em;">🔓 <strong>Modo Navegação Livre</strong> — use a barra inferior para navegar entre as etapas.</div>';
+            var welcome = document.getElementById('welcomeScreen');
+            if (welcome) welcome.classList.remove('hidden');
             scrollToTop();
         }
 
         function desativarNavLivre() {
             navLivreAtiva = false;
             document.getElementById('barraNavLivre').style.display = 'none';
-            document.getElementById('menuBtnNavLivre').style.background = '#37474f';
-            document.getElementById('menuBtnNavLivre').textContent = '🔓 Navegar';
+            var btnSair = document.getElementById('menuBtnSairNavLivre');
+            if (btnSair) btnSair.style.display = 'none';
+            var btnAtiva = document.getElementById('menuBtnNavLivre');
+            if (btnAtiva) btnAtiva.style.display = 'block';
             _esconderTodasTelas();
             var welcome = document.getElementById('welcomeScreen');
             if (welcome) welcome.classList.remove('hidden');
@@ -5268,7 +5268,7 @@ showResultDirect(resultType, resultTitle, resultMessage, iciScore, cidNumber, ci
     </div>
     <!-- Rodapé fixo global -->
     <div id="rodapeFixo" style="position:fixed; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.55); color:rgba(255,255,255,0.88); text-align:center; padding:9px 20px; font-size:0.82em; line-height:1.6; z-index:99998; box-sizing:border-box;">
-        🔬 <strong>Protocolo Científico para Fake News</strong> | Escola SESI Uberaba — Alberto Martins Fontoura Borges | Ferramenta Educacional &nbsp;|&nbsp; 📧 <a href="/cdn-cgi/l/email-protection#e19589808d8492cf868093828880a18788848c86cf828e8ccf8393" style="color:rgba(255,255,255,0.88); text-decoration:none;"><span class="__cf_email__" data-cfemail="cabea2aba6afb9e4adabb8a9a3ab8aaca3afa7ade4a9a5a7e4a8b8">[email&#160;protected]</span></a>
+        🔬 <strong>Protocolo Científico para Fake News</strong> | Escola SESI Uberaba — Alberto Martins Fontoura Borges | Ferramenta Educacional &nbsp;|&nbsp; 📧 <a href="mailto:thales.garcia@fiemg.com.br" style="color:rgba(255,255,255,0.88); text-decoration:none;">thales.garcia@fiemg.com.br</a>
     </div>
 
     <!-- ========== MODAL CONFIGURAÇÕES SUPERADMIN ========== -->
@@ -5371,4 +5371,9 @@ showResultDirect(resultType, resultTitle, resultMessage, iciScore, cidNumber, ci
             <button onclick="irParaEtapa(6)" style="padding:6px 12px; background:#455a64; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">E6</button>
             <button onclick="irParaEtapa(7)" style="padding:6px 12px; background:#455a64; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">E7</button>
             <button onclick="irParaResultado()" style="padding:6px 12px; background:#c62828; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">🏁 Resultado</button>
-            <button onclick="desativarNavLivre()" style="padding:6px 12px; background
+            <button onclick="desativarNavLivre()" style="padding:6px 12px; background:#b71c1c; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em; font-weight:bold;">🔒 Sair</button>
+        </div>
+    </div>
+
+</body>
+</html>
