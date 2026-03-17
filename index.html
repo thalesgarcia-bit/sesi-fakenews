@@ -1344,7 +1344,7 @@
                 flex-wrap: nowrap;
                 gap: 4px;
                 align-items: center;
-                justify-content: space-between;
+                position: relative;
             }
 
             .logo-section {
@@ -1352,9 +1352,7 @@
                 flex-direction: row;
                 align-items: center;
                 gap: 6px;
-                flex: 1 1 0;
-                min-width: 0;
-                overflow: hidden;
+                flex: 0 0 auto;
             }
 
             .logo-img,
@@ -1366,22 +1364,24 @@
             }
 
             .header-title {
-                flex: 1 1 0;
-                min-width: 0;
-                overflow: hidden;
+                position: absolute;
+                left: 0;
+                right: 0;
+                text-align: center;
+                pointer-events: none;
             }
 
             .main-title {
                 font-size: 0.78em;
                 white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                display: block;
             }
 
             .subtitle { display: none !important; }
 
-            .header-controls { flex-shrink: 0; }
+            .header-controls {
+                margin-left: auto;
+                flex-shrink: 0;
+            }
 
             #userPanel {
                 gap: 4px !important;
@@ -2213,12 +2213,12 @@
             </div>
             <div style="border-top: 1px solid var(--border); padding-top: 12px;">
                 <p style="margin: 0; font-size: 1.05em; color: white;">
-                    📧 Dúvidas, feedbacks ou sugestões de melhoria: <a href="mailto:thales.garcia@fiemg.com.br" style="color: #ffeb3b; text-decoration: none; font-weight: 500;">thales.garcia@fiemg.com.br</a></p>
+                    📧 Dúvidas, feedbacks ou sugestões de melhoria: <a href="/cdn-cgi/l/email-protection#37435f565b524419505645545e5677515e525a501954585a195545" style="color: #ffeb3b; text-decoration: none; font-weight: 500;"><span class="__cf_email__" data-cfemail="72061a131e17015c151300111b1332141b171f155c111d1f5c1000">[email&#160;protected]</span></a></p>
             </div>
         </div>
     </div>
 
-    <script>
+    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
         // Esperar o DOM estar completamente carregado
 
         // ========== FIREBASE CONFIG ==========
@@ -5268,7 +5268,7 @@ showResultDirect(resultType, resultTitle, resultMessage, iciScore, cidNumber, ci
     </div>
     <!-- Rodapé fixo global -->
     <div id="rodapeFixo" style="position:fixed; bottom:0; left:0; width:100%; background:rgba(0,0,0,0.55); color:rgba(255,255,255,0.88); text-align:center; padding:9px 20px; font-size:0.82em; line-height:1.6; z-index:99998; box-sizing:border-box;">
-        🔬 <strong>Protocolo Científico para Fake News</strong> | Escola SESI Uberaba — Alberto Martins Fontoura Borges | Ferramenta Educacional &nbsp;|&nbsp; 📧 <a href="mailto:thales.garcia@fiemg.com.br" style="color:rgba(255,255,255,0.88); text-decoration:none;">thales.garcia@fiemg.com.br</a>
+        🔬 <strong>Protocolo Científico para Fake News</strong> | Escola SESI Uberaba — Alberto Martins Fontoura Borges | Ferramenta Educacional &nbsp;|&nbsp; 📧 <a href="/cdn-cgi/l/email-protection#57233f363b322479303625343e3617313e323a307934383a793525" style="color:rgba(255,255,255,0.88); text-decoration:none;"><span class="__cf_email__" data-cfemail="bcc8d4ddd0d9cf92dbddcedfd5ddfcdad5d9d1db92dfd3d192dece">[email&#160;protected]</span></a>
     </div>
 
     <!-- ========== MODAL CONFIGURAÇÕES SUPERADMIN ========== -->
@@ -5370,10 +5370,4 @@ showResultDirect(resultType, resultTitle, resultMessage, iciScore, cidNumber, ci
             <button onclick="irParaEtapa(5)" style="padding:6px 12px; background:#455a64; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">E5</button>
             <button onclick="irParaEtapa(6)" style="padding:6px 12px; background:#455a64; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">E6</button>
             <button onclick="irParaEtapa(7)" style="padding:6px 12px; background:#455a64; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">E7</button>
-            <button onclick="irParaResultado()" style="padding:6px 12px; background:#c62828; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em;">🏁 Resultado</button>
-            <button onclick="desativarNavLivre()" style="padding:6px 12px; background:#b71c1c; color:white; border:none; border-radius:5px; cursor:pointer; font-size:0.8em; font-weight:bold;">🔒 Sair</button>
-        </div>
-    </div>
-
-</body>
-</html>
+            <button onclick="irParaResultad
